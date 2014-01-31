@@ -1,21 +1,21 @@
-package com.amazon.parser.antlr;
+package com.amazon.parser.java.antlr;
 
 import java.io.Reader;
 import java.io.StringReader;
 
 import org.junit.Test;
 
-import com.amazon.parser.ClassDefinition;
+import com.amazon.parser.java.ClassDefinition;
 
-import static com.amazon.parser.GenericArgument.BoundaryType.EXTENDS;
-import static com.amazon.parser.GenericArgument.BoundaryType.NONE;
+import static com.amazon.parser.java.GenericArgument.BoundaryType.EXTENDS;
+import static com.amazon.parser.java.GenericArgument.BoundaryType.NONE;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
 public class AntlrJavaParserTest {
 
-    private final com.amazon.parser.JavaParser parser = new AntlrJavaParser();
+    private final com.amazon.parser.java.JavaParser parser = new AntlrJavaParser();
 
     @Test
     public void extractsClassNameRight() throws Exception {

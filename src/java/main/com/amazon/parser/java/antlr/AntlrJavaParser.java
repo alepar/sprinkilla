@@ -1,4 +1,4 @@
-package com.amazon.parser.antlr;
+package com.amazon.parser.java.antlr;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -14,11 +14,11 @@ import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-import com.amazon.parser.ClassDefinition;
+import com.amazon.parser.java.ClassDefinition;
 
-import static com.amazon.parser.GenericArgument.BoundaryType;
+import static com.amazon.parser.java.GenericArgument.BoundaryType;
 
-public class AntlrJavaParser implements com.amazon.parser.JavaParser {
+public class AntlrJavaParser implements com.amazon.parser.java.JavaParser {
 
     @Override
     public ClassDefinition parse(Reader r) {
@@ -43,6 +43,7 @@ public class AntlrJavaParser implements com.amazon.parser.JavaParser {
         EXPECT_CLASS_DECLARATION,
         EXPECT_TYPE_PARAMETER,
         EXPECT_BOUNDARY_NAME,
+        END,
     }
 
     public static class Listener extends JavaBaseListener implements ClassDefinition {
@@ -98,6 +99,10 @@ public class AntlrJavaParser implements com.amazon.parser.JavaParser {
             }
         }
 
+        @Override
+        public void enterClassBody(@NotNull JavaParser.ClassBodyContext ctx) {
+            state = State.END; //declaration finished, nothing more to expect
+        }
 
         @Override
         public String getName() {
@@ -106,7 +111,7 @@ public class AntlrJavaParser implements com.amazon.parser.JavaParser {
 
         @SuppressWarnings("unchecked")
         @Override
-        public List<com.amazon.parser.GenericArgument> getGenericArguments() {
+        public List<com.amazon.parser.java.GenericArgument> getGenericArguments() {
             return Collections.unmodifiableList((List) genericArguments); // umodifiable to ensure type safety
         }
 
@@ -116,7 +121,7 @@ public class AntlrJavaParser implements com.amazon.parser.JavaParser {
         return fqcn.replaceFirst(".*\\.([^.]+)", "$1");
     }
 
-    private static class GenericArgument implements com.amazon.parser.GenericArgument {
+    private static class GenericArgument implements com.amazon.parser.java.GenericArgument {
 
         private final String name;
         private final BoundaryType boundaryType;

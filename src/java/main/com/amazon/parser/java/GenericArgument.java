@@ -1,4 +1,4 @@
-package com.amazon.parser;
+package com.amazon.parser.java;
 
 public interface GenericArgument {
     String getName();
