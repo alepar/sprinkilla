@@ -1,27 +1,27 @@
-package com.amazon.parser.java.antlr;
+package com.amazon.java.parser.antlr;
 
 import java.io.Reader;
 import java.io.StringReader;
 
 import org.junit.Test;
 
-import com.amazon.parser.java.ClassDefinition;
+import com.amazon.java.ClassDefinition;
 
-import static com.amazon.parser.java.GenericArgument.BoundaryType.EXTENDS;
-import static com.amazon.parser.java.GenericArgument.BoundaryType.NONE;
+import static com.amazon.java.GenericArgument.BoundaryType.EXTENDS;
+import static com.amazon.java.GenericArgument.BoundaryType.NO_WILDCARD;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
 public class AntlrJavaParserTest {
 
-    private final com.amazon.parser.java.JavaParser parser = new AntlrJavaParser();
+    private final com.amazon.java.parser.JavaParser parser = new AntlrJavaParser();
 
     @Test
     public void extractsClassNameRight() throws Exception {
         final ClassDefinition definition = parser.parse(from("public class Testname {}"));
 
-        assertThat(definition.getName(), equalTo("Testname"));
+        assertThat(definition.getFqcn(), equalTo("Testname"));
         assertThat(definition.getGenericArguments(), hasSize(0));
     }
 
@@ -31,7 +31,7 @@ public class AntlrJavaParserTest {
 
         assertThat(definition.getGenericArguments(), hasSize(1));
         assertThat(definition.getGenericArguments().get(0).getName(), equalTo("T"));
-        assertThat(definition.getGenericArguments().get(0).getBoundaryType(), equalTo(NONE));
+        assertThat(definition.getGenericArguments().get(0).getBoundaryType(), equalTo(NO_WILDCARD));
         assertThat(definition.getGenericArguments().get(0).getName(), equalTo("T"));
     }
 

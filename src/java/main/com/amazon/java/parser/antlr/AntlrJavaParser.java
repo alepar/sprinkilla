@@ -1,4 +1,4 @@
-package com.amazon.parser.java.antlr;
+package com.amazon.java.parser.antlr;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -16,11 +16,11 @@ import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-import com.amazon.parser.java.ClassDefinition;
+import com.amazon.java.ClassDefinition;
 
-import static com.amazon.parser.java.GenericArgument.BoundaryType;
+import static com.amazon.java.GenericArgument.BoundaryType;
 
-public class AntlrJavaParser implements com.amazon.parser.java.JavaParser {
+public class AntlrJavaParser implements com.amazon.java.parser.JavaParser {
 
     private static final Pattern PATTERN_EXTRACTSIMPLENAME = Pattern.compile(".*\\.([^.]+)");
 
@@ -85,7 +85,7 @@ public class AntlrJavaParser implements com.amazon.parser.java.JavaParser {
             if (state == State.EXPECT_TYPE_PARAMETER) {
                 genericArguments.add(new AntlrJavaParser.GenericArgument(
                         ctx.getChild(0).getText(),
-                        ctx.getChildCount() > 1 ? BoundaryType.EXTENDS : BoundaryType.NONE
+                        ctx.getChildCount() > 1 ? BoundaryType.EXTENDS : BoundaryType.NO_WILDCARD
                 ));
                 if (ctx.getChildCount() > 1) {
                     state = State.EXPECT_BOUNDARY_NAME;
@@ -109,13 +109,13 @@ public class AntlrJavaParser implements com.amazon.parser.java.JavaParser {
         }
 
         @Override
-        public String getName() {
+        public String getFqcn() {
             return name;
         }
 
         @SuppressWarnings("unchecked")
         @Override
-        public List<com.amazon.parser.java.GenericArgument> getGenericArguments() {
+        public List<com.amazon.java.GenericArgument> getGenericArguments() {
             return Collections.unmodifiableList((List) genericArguments); // umodifiable to ensure type safety
         }
 
@@ -129,7 +129,7 @@ public class AntlrJavaParser implements com.amazon.parser.java.JavaParser {
         return fqcn;
     }
 
-    private static class GenericArgument implements com.amazon.parser.java.GenericArgument {
+    private static class GenericArgument implements com.amazon.java.GenericArgument {
 
         private final String name;
         private final BoundaryType boundaryType;

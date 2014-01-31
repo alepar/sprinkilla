@@ -1,4 +1,4 @@
-package com.amazon.parser.java.antlr;// Generated from Java.g4 by ANTLR 4.1
+package com.amazon.java.parser.antlr;// Generated from Java.g4 by ANTLR 4.1
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.NotNull;

@@ -1,4 +1,4 @@
-package com.amazon.parser.java;
+package com.amazon.java;
 
 public interface GenericArgument {
     String getName();
@@ -8,7 +8,6 @@ public interface GenericArgument {
     String getBoundaryName();
 
     public enum BoundaryType {
-        NONE, EXTENDS
-
+        NO_WILDCARD, EXTENDS
     }
 }
