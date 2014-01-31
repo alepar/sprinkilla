@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -19,6 +21,8 @@ import com.amazon.parser.java.ClassDefinition;
 import static com.amazon.parser.java.GenericArgument.BoundaryType;
 
 public class AntlrJavaParser implements com.amazon.parser.java.JavaParser {
+
+    private static final Pattern PATTERN_EXTRACTSIMPLENAME = Pattern.compile(".*\\.([^.]+)");
 
     @Override
     public ClassDefinition parse(Reader r) {
@@ -118,7 +122,11 @@ public class AntlrJavaParser implements com.amazon.parser.java.JavaParser {
     }
 
     private static String extractClassName(String fqcn) {
-        return fqcn.replaceFirst(".*\\.([^.]+)", "$1");
+        final Matcher matcher = PATTERN_EXTRACTSIMPLENAME.matcher(fqcn);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return fqcn;
     }
 
     private static class GenericArgument implements com.amazon.parser.java.GenericArgument {
