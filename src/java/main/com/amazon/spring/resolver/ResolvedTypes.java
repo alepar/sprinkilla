@@ -5,4 +5,6 @@ import com.amazon.spring.ResolvedArguments;
 
 public interface ResolvedTypes {
     ResolvedArguments getTypesFor(BeanDefinition bean);
+
+    boolean isValid();
 }

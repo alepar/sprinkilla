@@ -1,23 +1,23 @@
 package com.amazon.spring.resolver;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import com.amazon.java.ClassDefinition;
 import com.amazon.java.ClassDefinitionProvider;
 import com.amazon.java.MethodDefinition;
 import com.amazon.spring.BeanDefinition;
 
-public class GenericWildcardResolver {
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+public class SpringBeanTypeValidator {
 
     private final ClassDefinitionProvider definitionProvider;
 
-    public GenericWildcardResolver(ClassDefinitionProvider definitionProvider) {
+    public SpringBeanTypeValidator(ClassDefinitionProvider definitionProvider) {
         this.definitionProvider = definitionProvider;
     }
 
-    public ResolvedTypes resolve(BeanDefinition bean) {
+    public ResolvedTypes validateAndResolve(BeanDefinition bean) {
         final ClassDefinition classDefinition = definitionProvider.getFor(bean.getClassname());
         final MethodDefinition method = matchSuitableConstructor(bean, classDefinition);
 
