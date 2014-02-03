@@ -1,13 +1,13 @@
 package com.amazon.spring.parser;
 
+import com.amazon.spring.BeanDefinition;
+
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.StringReader;
 import java.util.List;
-
-import com.amazon.spring.BeanDefinition;
 
 public class XercesSpringBeanParser implements SpringBeanParser {
 
@@ -30,6 +30,7 @@ public class XercesSpringBeanParser implements SpringBeanParser {
                 if (next == XMLStreamConstants.START_ELEMENT) {
                     if (xr.getLocalName().equals("bean")) {
                         result.name = xr.getAttributeValue(null, "id");
+                        result.classname = xr.getAttributeValue(null, "class");
                     }
                 }
             }
@@ -46,6 +47,7 @@ public class XercesSpringBeanParser implements SpringBeanParser {
 
     private static class BeanDefinitionImpl implements BeanDefinition {
         private String name;
+        private String classname;
 
         @Override
         public String getName() {
@@ -54,7 +56,7 @@ public class XercesSpringBeanParser implements SpringBeanParser {
 
         @Override
         public String getClassname() {
-            throw new RuntimeException("parfenov, implement me!");
+            return classname;
         }
 
         @Override

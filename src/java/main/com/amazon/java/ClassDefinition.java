@@ -3,7 +3,7 @@ package com.amazon.java;
 import java.util.List;
 
 public interface ClassDefinition {
-    String getFqcn();
+    TypeDefinition getType();
 
-    List<GenericArgument> getGenericArguments();
+    List<MethodDefinition> getConstructors();
 }

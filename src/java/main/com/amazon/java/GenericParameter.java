@@ -1,11 +1,11 @@
 package com.amazon.java;
 
-public interface GenericArgument {
+public interface GenericParameter {
     String getName();
 
     BoundaryType getBoundaryType();
 
-    String getBoundaryName();
+    String getBoundaryFqcn();
 
     public enum BoundaryType {
         NO_WILDCARD, EXTENDS

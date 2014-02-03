@@ -4,4 +4,6 @@ import java.util.List;
 
 public interface MethodDefinition {
     List<Variable> getArguments();
+
+    String getName();
 }

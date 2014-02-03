@@ -1,12 +1,22 @@
 package com.amazon.java;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MapDefinitionProvider implements ClassDefinitionProvider {
+
+    private final Map<String, ClassDefinition> definitions = new HashMap<>();
+
     @Override
     public ClassDefinition getFor(String fqcn) {
-        throw new RuntimeException("parfenov, implement me!");
+        final ClassDefinition definition = definitions.get(fqcn);
+        if (definition == null) {
+            throw new RuntimeException("could not find definition for " + fqcn);
+        }
+        return definition;
     }
 
     public void addDefinition(ClassDefinition definition) {
-        throw new RuntimeException("parfenov, implement me!");
+        definitions.put(definition.getType().getFqcn(), definition);
     }
 }

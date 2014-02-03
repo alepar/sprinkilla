@@ -1,24 +1,20 @@
 package com.amazon.java.parser.antlr;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import com.amazon.java.*;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-import com.amazon.java.ClassDefinition;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import static com.amazon.java.GenericArgument.BoundaryType;
+import static com.amazon.java.GenericParameter.BoundaryType;
 
 public class AntlrJavaParser implements com.amazon.java.parser.JavaParser {
 
@@ -45,9 +41,11 @@ public class AntlrJavaParser implements com.amazon.java.parser.JavaParser {
     private static enum State {
         EXPECT_TYPE_DECLARATION,
         EXPECT_CLASS_DECLARATION,
-        EXPECT_TYPE_PARAMETER,
         EXPECT_BOUNDARY_NAME,
-        END,
+        READ_PACKAGE,
+        EXPECT_METHODS,
+        EXPECT_CONSTRUCTOR_PARAMETERS,
+        EXPECT_CONSTRUCTOR_ARGUMENT, EXPECT_CONSTRUCTOR_ARGUMENT_TYPE_PARAMETERS,
     }
 
     public static class Listener extends JavaBaseListener implements ClassDefinition {
@@ -56,8 +54,15 @@ public class AntlrJavaParser implements com.amazon.java.parser.JavaParser {
 
         private final Map<String, String> imports = new HashMap<>();
 
-        private final List<AntlrJavaParser.GenericArgument> genericArguments = new ArrayList<>();
+        private final List<AntlrGenericParameter> classGenericParameters = new ArrayList<>();
+        private final List<MethodDefinition> constructors = new ArrayList<>();
         private String name;
+        private String packageName;
+
+        private List<Variable> methodParams;
+        private String methodArgumentFqcn;
+        private String methodArgumentName;
+        private List<AntlrGenericParameter> methodArgumentGenericParameters;
 
         @Override
         public void enterTypeDeclaration(@NotNull JavaParser.TypeDeclarationContext ctx) {
@@ -76,49 +81,185 @@ public class AntlrJavaParser implements com.amazon.java.parser.JavaParser {
         public void enterClassDeclaration(@NotNull JavaParser.ClassDeclarationContext ctx) {
             if (state == State.EXPECT_CLASS_DECLARATION) {
                 name = ctx.getChild(1).getText();
-                state = State.EXPECT_TYPE_PARAMETER;
+                state = State.EXPECT_BOUNDARY_NAME;
             }
         }
 
         @Override
         public void enterTypeParameter(@NotNull JavaParser.TypeParameterContext ctx) {
-            if (state == State.EXPECT_TYPE_PARAMETER) {
-                genericArguments.add(new AntlrJavaParser.GenericArgument(
-                        ctx.getChild(0).getText(),
-                        ctx.getChildCount() > 1 ? BoundaryType.EXTENDS : BoundaryType.NO_WILDCARD
-                ));
-                if (ctx.getChildCount() > 1) {
-                    state = State.EXPECT_BOUNDARY_NAME;
+            if (state == State.EXPECT_BOUNDARY_NAME) {
+                final AntlrGenericParameter parameter = extractGenericParameter(ctx);
+                classGenericParameters.add(parameter);
+            }
+        }
+
+        @Override
+        public void exitTypeParameters(@NotNull JavaParser.TypeParametersContext ctx) {
+            if (state == State.EXPECT_BOUNDARY_NAME) {
+                state = State.EXPECT_METHODS;
+            }
+        }
+
+        @Override
+        public void enterTypeArguments(@NotNull JavaParser.TypeArgumentsContext ctx) {
+            if (state == State.EXPECT_CONSTRUCTOR_ARGUMENT) {
+                state = State.EXPECT_CONSTRUCTOR_ARGUMENT_TYPE_PARAMETERS;
+            }
+        }
+
+        @Override
+        public void exitTypeArguments(@NotNull JavaParser.TypeArgumentsContext ctx) {
+            if (state == State.EXPECT_CONSTRUCTOR_ARGUMENT_TYPE_PARAMETERS) {
+                state = State.EXPECT_CONSTRUCTOR_ARGUMENT;
+            }
+        }
+
+        @Override
+        public void enterTypeArgument(@NotNull JavaParser.TypeArgumentContext ctx) {
+            if (state == State.EXPECT_CONSTRUCTOR_ARGUMENT_TYPE_PARAMETERS) {
+                final AntlrGenericParameter parameter = extractGenericParameter(ctx);
+                methodArgumentGenericParameters.add(parameter);
+            }
+        }
+
+        @Override
+        public void exitTypeArgument(@NotNull JavaParser.TypeArgumentContext ctx) {
+            if (state == State.EXPECT_CONSTRUCTOR_ARGUMENT_TYPE_PARAMETERS) {
+                final AntlrGenericParameter param = methodArgumentGenericParameters.get(methodArgumentGenericParameters.size() - 1);
+                if (param.boundaryType == BoundaryType.NO_WILDCARD) {
+                    final AntlrGenericParameter classDefinitionParameter = findParameter(param.getName());
+                    if (classDefinitionParameter != null) {
+                        methodArgumentGenericParameters.remove(methodArgumentGenericParameters.size()-1);
+                        methodArgumentGenericParameters.add(classDefinitionParameter);
+                    }
                 }
             }
         }
 
         @Override
         public void enterClassOrInterfaceType(@NotNull JavaParser.ClassOrInterfaceTypeContext ctx) {
-            if (state == State.EXPECT_BOUNDARY_NAME) {
+            if (state == State.EXPECT_BOUNDARY_NAME || state == State.EXPECT_CONSTRUCTOR_ARGUMENT || state == State.EXPECT_CONSTRUCTOR_ARGUMENT_TYPE_PARAMETERS) {
                 final String classname = ctx.getChild(0).getText();
                 final String fqcn = imports.get(classname);
-                genericArguments.get(genericArguments.size()-1).boundaryName = fqcn == null ? classname : fqcn;
-                state = State.EXPECT_TYPE_PARAMETER;
+
+                if (state == State.EXPECT_BOUNDARY_NAME) {
+                    classGenericParameters.get(classGenericParameters.size()-1).boundaryFqcn = fqcn == null ? classname : fqcn;
+                } else if (state == State.EXPECT_CONSTRUCTOR_ARGUMENT) {
+                    methodArgumentFqcn = fqcn;
+                } else if (state == State.EXPECT_CONSTRUCTOR_ARGUMENT_TYPE_PARAMETERS) {
+                    methodArgumentGenericParameters.get(methodArgumentGenericParameters.size()-1).boundaryFqcn = fqcn == null ? classname : fqcn;
+                }
             }
         }
 
         @Override
         public void enterClassBody(@NotNull JavaParser.ClassBodyContext ctx) {
-            state = State.END; //declaration finished, nothing more to expect
+            state = State.EXPECT_METHODS;
         }
 
         @Override
-        public String getFqcn() {
-            return name;
+        public void enterPackageDeclaration(@NotNull JavaParser.PackageDeclarationContext ctx) {
+            state = State.READ_PACKAGE;
         }
 
-        @SuppressWarnings("unchecked")
         @Override
-        public List<com.amazon.java.GenericArgument> getGenericArguments() {
-            return Collections.unmodifiableList((List) genericArguments); // umodifiable to ensure type safety
+        public void exitPackageDeclaration(@NotNull JavaParser.PackageDeclarationContext ctx) {
+            state = State.EXPECT_TYPE_DECLARATION;
         }
 
+        @Override
+        public void enterQualifiedName(@NotNull JavaParser.QualifiedNameContext ctx) {
+            if (state == State.READ_PACKAGE) {
+                packageName = ctx.getText();
+            }
+        }
+
+        @Override
+        public void enterConstructorDeclaration(@NotNull JavaParser.ConstructorDeclarationContext ctx) {
+            if (state == State.EXPECT_METHODS) {
+                state = State.EXPECT_CONSTRUCTOR_PARAMETERS;
+            }
+        }
+
+        @Override
+        public void enterFormalParameterList(@NotNull JavaParser.FormalParameterListContext ctx) {
+            if (state == State.EXPECT_CONSTRUCTOR_PARAMETERS) {
+                methodParams = new ArrayList<>();
+                state = State.EXPECT_CONSTRUCTOR_ARGUMENT;
+            }
+        }
+
+        @Override
+        public void enterFormalParameter(@NotNull JavaParser.FormalParameterContext ctx) {
+            if (state == State.EXPECT_CONSTRUCTOR_ARGUMENT) {
+                methodArgumentGenericParameters = new ArrayList<>();
+            }
+        }
+
+        @Override
+        public void enterVariableDeclaratorId(@NotNull JavaParser.VariableDeclaratorIdContext ctx) {
+            if (state == State.EXPECT_CONSTRUCTOR_ARGUMENT) {
+                methodArgumentName = ctx.getText();
+            }
+        }
+
+        @Override
+        public void exitFormalParameter(@NotNull JavaParser.FormalParameterContext ctx) {
+            if (state == State.EXPECT_CONSTRUCTOR_ARGUMENT) {
+                methodParams.add(new AntlrVariable(
+                        methodArgumentName,
+                        new AntlrTypeDefinition(methodArgumentFqcn, convertParams(methodArgumentGenericParameters))
+                ));
+            }
+        }
+
+        @Override
+        public void exitConstructorDeclaration(@NotNull JavaParser.ConstructorDeclarationContext ctx) {
+            if (state == State.EXPECT_CONSTRUCTOR_ARGUMENT) {
+                constructors.add(new AntlrMethodDefinition(methodParams, name));
+                methodParams = null;
+            }
+        }
+
+        @Override
+        public TypeDefinition getType() {
+            return new AntlrTypeDefinition(
+                    packageName == null || packageName.isEmpty() ? name : packageName + '.' + name,
+                    convertParams(classGenericParameters)
+             );
+        }
+
+        @Override
+        public List<MethodDefinition> getConstructors() {
+            return constructors;
+        }
+
+        @Override
+        public void enterEveryRule(@NotNull ParserRuleContext ctx) {
+//            System.out.println("enter " + ctx.getClass().getSimpleName());
+        }
+
+        @Override
+        public void exitEveryRule(@NotNull ParserRuleContext ctx) {
+//            System.out.println("exit " + ctx.getClass().getSimpleName());
+        }
+
+        private AntlrGenericParameter findParameter(String name) {
+            for (AntlrGenericParameter parameter : classGenericParameters) {
+                if (parameter.getName().equals(name)) {
+                    return parameter;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    private static AntlrGenericParameter extractGenericParameter(ParserRuleContext ctx) {
+        return new AntlrGenericParameter(
+                            ctx.getChild(0).getText(),
+                            ctx.getChildCount() > 1 ? BoundaryType.EXTENDS : BoundaryType.NO_WILDCARD
+                    );
     }
 
     private static String extractClassName(String fqcn) {
@@ -129,13 +270,13 @@ public class AntlrJavaParser implements com.amazon.java.parser.JavaParser {
         return fqcn;
     }
 
-    private static class GenericArgument implements com.amazon.java.GenericArgument {
+    private static class AntlrGenericParameter implements GenericParameter {
 
         private final String name;
         private final BoundaryType boundaryType;
-        private String boundaryName;
+        private String boundaryFqcn;
 
-        private GenericArgument(String name, BoundaryType boundaryType) {
+        private AntlrGenericParameter(String name, BoundaryType boundaryType) {
             this.name = name;
             this.boundaryType = boundaryType;
         }
@@ -151,9 +292,74 @@ public class AntlrJavaParser implements com.amazon.java.parser.JavaParser {
         }
 
         @Override
-        public String getBoundaryName() {
-            return boundaryName;
+        public String getBoundaryFqcn() {
+            return boundaryFqcn;
         }
+    }
+
+    private static class AntlrVariable implements Variable {
+        private final String name;
+        private final TypeDefinition type;
+
+        private AntlrVariable(String name, TypeDefinition type) {
+            this.name = name;
+            this.type = type;
+        }
+
+        @Override
+        public TypeDefinition getType() {
+            return type;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+    }
+
+    private static class AntlrTypeDefinition implements TypeDefinition {
+        private final String fqcn;
+        private final List<GenericParameter> args;
+
+        public AntlrTypeDefinition(String fqcn, List<GenericParameter> args) {
+            this.fqcn = fqcn;
+            this.args = args;
+        }
+
+        @Override
+        public String getFqcn() {
+            return fqcn;
+        }
+
+        @Override
+        public List<GenericParameter> getGenericParameters() {
+            return args;
+        }
+    }
+
+    private static class AntlrMethodDefinition implements MethodDefinition {
+        private final List<Variable> vars;
+        private final String name;
+
+        private AntlrMethodDefinition(List<Variable> vars, String name) {
+            this.vars = vars;
+            this.name = name;
+        }
+
+        @Override
+        public List<Variable> getArguments() {
+            return vars;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<GenericParameter> convertParams(List<AntlrGenericParameter> args) {
+        return Collections.unmodifiableList((List) args);  // umodifiable to ensure type safety
     }
 
 }
