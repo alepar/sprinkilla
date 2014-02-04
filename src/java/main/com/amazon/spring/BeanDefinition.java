@@ -5,8 +5,8 @@ import java.util.List;
 public interface BeanDefinition {
     String getName();
 
-    String getClassname();
+    String getFqcn();
 
-    List<BeanDefinition> getConstructorArgs();
+    List<ConstructorArgument> getConstructorArgs();
 
 }

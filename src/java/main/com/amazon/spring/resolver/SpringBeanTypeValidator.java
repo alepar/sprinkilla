@@ -19,15 +19,15 @@ public class SpringBeanTypeValidator {
     }
 
     public ResolvedTypes validateAndResolve(BeanDefinition bean) {
-        final ClassDefinition classDefinition = definitionProvider.getFor(bean.getClassname());
+        final ClassDefinition classDefinition = definitionProvider.getFor(bean.getFqcn());
         final MethodDefinition method = matchSuitableConstructor(bean, classDefinition);
 
         final List<Boundary> boundaries = new ArrayList<>();
         for (int i=0; i<method.getArguments().size(); i++) {
             final TypeDefinition sourceType = method.getArguments().get(i).getType();
             final ClassDefinition sourceClass = definitionProvider.getFor(sourceType.getFqcn());
-            final BeanDefinition constructorArgBean = bean.getConstructorArgs().get(i);
-            final ClassDefinition constructorArgClass = definitionProvider.getFor(constructorArgBean.getClassname());
+            final BeanDefinition constructorArgBean = bean.getConstructorArgs().get(i).getBeanDefinition();
+            final ClassDefinition constructorArgClass = definitionProvider.getFor(constructorArgBean.getFqcn());
             boundaries.addAll(inferBoundaries(sourceClass, constructorArgClass));
         }
 
@@ -43,7 +43,14 @@ public class SpringBeanTypeValidator {
     }
 
     private MethodDefinition matchSuitableConstructor(BeanDefinition bean, ClassDefinition classDefinition) {
-        throw new RuntimeException("parfenov, implement me!");
+        final int argCount = bean.getConstructorArgs().size();
+        for (MethodDefinition constructor : classDefinition.getConstructors()) {
+            if (constructor.getArguments().size() == argCount) {
+                return constructor;
+            }
+        }
+
+        throw new RuntimeException("could not find matching constructor for bean named " + bean.getName());
     }
 
     private static class Boundary {
