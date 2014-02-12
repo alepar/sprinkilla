@@ -28,9 +28,15 @@ public class GenericParametersExtractor extends StackTreeListener {
     @Override
     public void enterTypeParameter(@NotNull JavaParser.TypeParameterContext ctx) {
         name = ctx.getChild(0).getText();
-        boundaryModifier = GenericParameter.BoundaryModifier.EXTENDS;
         if (ctx.getChildCount() == 1) {
             boundaryType = new AntlrTypeDefinition("java.lang.Object", Collections.<TypeDefinition>emptyList(), null);
+            boundaryModifier = GenericParameter.BoundaryModifier.EXTENDS;
+        } else {
+            if ("super".equals(ctx.getChild(1).getText())) {
+                boundaryModifier = GenericParameter.BoundaryModifier.SUPER;
+            } else {
+                boundaryModifier = GenericParameter.BoundaryModifier.EXTENDS;
+            }
         }
     }
 

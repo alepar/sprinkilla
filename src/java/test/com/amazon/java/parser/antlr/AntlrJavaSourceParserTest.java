@@ -66,7 +66,7 @@ public class AntlrJavaSourceParserTest {
     }
 
     @Test
-    public void extractsBoundParameter() throws Exception {
+    public void extractsExtendsBoundTypeInGenericParameter() throws Exception {
         final ClassDefinition definition = parser.parse(from("public class Testname<T extends Number> {}"));
 
         assertThat(definition.getType().getGenericArguments(), hasSize(1));

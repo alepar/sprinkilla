@@ -105,6 +105,8 @@ public class SpringBeanTypeValidatorTest {
         final String sourceForActualArgument =
                 "package com.amazon;\n" +
                 "\n" +
+                "import com.amazon.SomeOtherType;\n" +
+                "\n" +
                 "public class SomeType extends SomeOtherType { }";
         final String sourceForExpectedArgument =
                 "package com.amazon;\n" +

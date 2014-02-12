@@ -10,6 +10,6 @@ public interface GenericParameter {
     GenericContext getContext();
 
     public enum BoundaryModifier {
-        NO_WILDCARD, EXTENDS
+        SUPER, EXTENDS
     }
 }

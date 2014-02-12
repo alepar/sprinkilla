@@ -10,16 +10,14 @@ import com.amazon.java.GenericParameter;
 import com.amazon.java.MethodDefinition;
 import com.amazon.java.TypeDefinition;
 
-class AntlrClassDefinition implements ClassDefinition {
-
-    public static final AntlrTypeDefinition JAVA_LANG_OBJECT = new AntlrTypeDefinition("java.lang.Object", Collections.<TypeDefinition>emptyList(), null);
+public class AntlrClassDefinition implements ClassDefinition {
 
     private final TypeDefinition type;
     private final List<MethodDefinition> constructors;
     private final List<TypeDefinition> parentTypes;
 
     public AntlrClassDefinition(SourceFileClassExtractor extractor) {
-        this.parentTypes = extractor.getParentTypes().isEmpty() ? Collections.<TypeDefinition>singletonList(JAVA_LANG_OBJECT) : extractor.getParentTypes();
+        this.parentTypes = extractor.getParentTypes().isEmpty() ? Collections.<TypeDefinition>singletonList(TypeDefinition.JAVA_LANG_OBJECT) : extractor.getParentTypes();
         this.constructors = extractor.getConstructors();
         this.type = new AntlrTypeDefinition(
                 extractor.getPackageName() == null || extractor.getPackageName().isEmpty() ? extractor.getName() : extractor.getPackageName() + '.' + extractor.getName(),
