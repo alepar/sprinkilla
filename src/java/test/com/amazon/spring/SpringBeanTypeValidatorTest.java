@@ -1,24 +1,25 @@
 package com.amazon.spring;
 
+import org.junit.Ignore;
+import org.junit.Test;
+
+import com.amazon.java.IndexedTypeHierarchy;
+import com.amazon.java.JavaSourceRepository;
 import com.amazon.java.MapDefinitionProvider;
-import com.amazon.java.parser.JavaParser;
-import com.amazon.java.parser.antlr.AntlrJavaParser;
+import com.amazon.java.parser.antlr.AntlrJavaSourceParser;
 import com.amazon.spring.parser.SpringBeanParser;
 import com.amazon.spring.parser.XercesSpringBeanParser;
 import com.amazon.spring.resolver.ResolvedTypes;
 import com.amazon.spring.resolver.SpringBeanTypeValidator;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import java.io.StringReader;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 
 public class SpringBeanTypeValidatorTest {
 
+    private final JavaSourceRepository repository = new JavaSourceRepository(new IndexedTypeHierarchy(), new MapDefinitionProvider(), new AntlrJavaSourceParser());
+
     private final SpringBeanParser springBeanParser = new XercesSpringBeanParser();
-    private final JavaParser javaParser = new AntlrJavaParser();
 
     @Test
     public void passesValidationWhenExpectedClassAndPassedInAreTheSame() throws Exception {
@@ -40,12 +41,11 @@ public class SpringBeanTypeValidatorTest {
                 "package com.amazon;\n" +
                 "\n" +
                 "public class SomeType { }";
-        final MapDefinitionProvider defProvider = new MapDefinitionProvider();
-        defProvider.addDefinition(javaParser.parse(new StringReader(sourceForNumberProcessor)));
-        defProvider.addDefinition(javaParser.parse(new StringReader(sourceForListOfDoubles)));
+        repository.addSource(sourceForNumberProcessor);
+        repository.addSource(sourceForListOfDoubles);
 
         final BeanDefinition bean = springBeanParser.parse(xml);
-        final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(defProvider);
+        final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
         final ResolvedTypes types = resolver.validateAndResolve(bean);
 
         assertThat(types.isValid(), equalTo(true));
@@ -56,30 +56,69 @@ public class SpringBeanTypeValidatorTest {
         final String xml =
                 "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
                 "    <constructor-arg name=\"one\">\n" +
-                "        <bean id=\"oneArg\" class=\"com.amazon.SomeType\" />\n" +
+                "        <bean class=\"com.amazon.SomeType\" />\n" +
                 "    </constructor-arg>\n" +
                 "</bean>\n";
         final String sourceForNumberProcessor =
                 "package com.amazon;\n" +
                 "\n" +
-                "import com.amazon.other.SomeType;\n" +
+                "import com.amazon.SomeOtherType;\n" +
                 "\n" +
                 "public class NumberProcessor {\n" +
-                "    public NumberProcessor(SomeType sometype) {}\n" +
+                "    public NumberProcessor(SomeOtherType sometype) {}\n" +
                 "}";
-        final String sourceForListOfDoubles =
+        final String sourceForSomeType =
                 "package com.amazon;\n" +
                 "\n" +
                 "public class SomeType { }";
-        final MapDefinitionProvider defProvider = new MapDefinitionProvider();
-        defProvider.addDefinition(javaParser.parse(new StringReader(sourceForNumberProcessor)));
-        defProvider.addDefinition(javaParser.parse(new StringReader(sourceForListOfDoubles)));
+        final String sourceForSomeOtherType =
+                "package com.amazon;\n" +
+                "\n" +
+                "public class SomeOtherType { }";
+        repository.addSource(sourceForNumberProcessor);
+        repository.addSource(sourceForSomeType);
+        repository.addSource(sourceForSomeOtherType);
 
         final BeanDefinition bean = springBeanParser.parse(xml);
-        final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(defProvider);
+        final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
         final ResolvedTypes types = resolver.validateAndResolve(bean);
 
         assertThat(types.isValid(), equalTo(false));
+    }
+
+    @Test
+    public void passingSubclassAsAnArgumentPassesValidation() throws Exception {
+        final String xml =
+                "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
+                "    <constructor-arg name=\"one\">\n" +
+                "        <bean class=\"com.amazon.SomeType\" />\n" +
+                "    </constructor-arg>\n" +
+                "</bean>\n";
+        final String sourceForBeanClass =
+                "package com.amazon;\n" +
+                "\n" +
+                "import com.amazon.SomeOtherType;\n" +
+                "\n" +
+                "public class NumberProcessor {\n" +
+                "    public NumberProcessor(SomeOtherType sometype) {}\n" +
+                "}";
+        final String sourceForActualArgument =
+                "package com.amazon;\n" +
+                "\n" +
+                "public class SomeType extends SomeOtherType { }";
+        final String sourceForExpectedArgument =
+                "package com.amazon;\n" +
+                "\n" +
+                "public class SomeOtherType { }";
+        repository.addSource(sourceForBeanClass);
+        repository.addSource(sourceForActualArgument);
+        repository.addSource(sourceForExpectedArgument);
+
+        final BeanDefinition bean = springBeanParser.parse(xml);
+        final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
+        final ResolvedTypes types = resolver.validateAndResolve(bean);
+
+        assertThat(types.isValid(), equalTo(true));
     }
 
     @Test @Ignore
@@ -104,12 +143,11 @@ public class SpringBeanTypeValidatorTest {
                 "import java.util.List;\n" +
                 "\n" +
                 "public class ListOfDoubles<T extends Double> implements List<T> { }";
-        final MapDefinitionProvider defProvider = new MapDefinitionProvider();
-        defProvider.addDefinition(javaParser.parse(new StringReader(sourceForNumberProcessor)));
-        defProvider.addDefinition(javaParser.parse(new StringReader(sourceForListOfDoubles)));
+        repository.addSource(sourceForNumberProcessor);
+        repository.addSource(sourceForListOfDoubles);
 
         final BeanDefinition bean = springBeanParser.parse(xml);
-        final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(defProvider);
+        final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
         final ResolvedTypes types = resolver.validateAndResolve(bean);
 
         final ResolvedArguments arg = types.getTypesFor(bean);

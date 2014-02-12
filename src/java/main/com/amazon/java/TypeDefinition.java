@@ -6,6 +6,7 @@ public interface TypeDefinition {
 
     String getFqcn();
 
-    List<GenericParameter> getGenericParameters();
+    List<TypeDefinition> getGenericArguments();
 
+    GenericParameter getGenericParam();
 }

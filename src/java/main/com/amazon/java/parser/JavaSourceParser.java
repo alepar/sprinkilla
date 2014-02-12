@@ -4,7 +4,7 @@ import java.io.Reader;
 
 import com.amazon.java.ClassDefinition;
 
-public interface JavaParser {
+public interface JavaSourceParser {
 
     ClassDefinition parse(Reader r);
 

@@ -3,7 +3,7 @@ package com.amazon.java;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MapDefinitionProvider implements ClassDefinitionProvider {
+public class MapDefinitionProvider implements MutableClassDefinitionProvider {
 
     private final Map<String, ClassDefinition> definitions = new HashMap<>();
 
@@ -16,6 +16,7 @@ public class MapDefinitionProvider implements ClassDefinitionProvider {
         return definition;
     }
 
+    @Override
     public void addDefinition(ClassDefinition definition) {
         definitions.put(definition.getType().getFqcn(), definition);
     }

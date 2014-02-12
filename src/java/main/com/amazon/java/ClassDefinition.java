@@ -6,4 +6,6 @@ public interface ClassDefinition {
     TypeDefinition getType();
 
     List<MethodDefinition> getConstructors();
+
+    List<TypeDefinition> getParentTypes();
 }

@@ -3,11 +3,13 @@ package com.amazon.java;
 public interface GenericParameter {
     String getName();
 
-    BoundaryType getBoundaryType();
+    BoundaryModifier getBoundaryModifier();
 
-    String getBoundaryFqcn();
+    TypeDefinition getBoundaryType();
 
-    public enum BoundaryType {
+    GenericContext getContext();
+
+    public enum BoundaryModifier {
         NO_WILDCARD, EXTENDS
     }
 }
