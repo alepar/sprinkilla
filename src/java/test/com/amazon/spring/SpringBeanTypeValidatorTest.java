@@ -134,12 +134,12 @@ public class SpringBeanTypeValidatorTest {
                 "package com.amazon;\n" +
                 "\n" +
                 "public class NumberProcessor {\n" +
-                "    public NumberProcessor(List<Number> numbers) {}\n" +
+                "    public NumberProcessor(com.amazon.List<com.amazon.Number> numbers) {}\n" +
                 "}";
         final String sourceForListOfDoubles =
                 "package com.amazon;\n" +
                 "\n" +
-                "public class SomeType extends com.amazon.List<Number> { }";
+                "public class SomeType extends com.amazon.List<com.amazon.Number> { }";
         repository.addSource(sourceForNumberProcessor);
         repository.addSource(sourceForListOfDoubles);
 
