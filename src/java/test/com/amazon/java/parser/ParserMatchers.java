@@ -1,10 +1,9 @@
 package com.amazon.java.parser;
 
+import com.amazon.java.TypeDefinition;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-
-import com.amazon.java.TypeDefinition;
 
 public class ParserMatchers {
 
@@ -17,7 +16,7 @@ public class ParserMatchers {
                 }
 
                 final TypeDefinition type = (TypeDefinition) item;
-                return fqcn.equals(type.getFqcn()) && type.getGenericArguments().size() == 0 && type.getGenericParam() == null;
+                return fqcn.equals(type.getFqcn()) && type.getGenericTypeParameters().isEmpty() && type.getTypeParameter() == null;
             }
 
             @Override

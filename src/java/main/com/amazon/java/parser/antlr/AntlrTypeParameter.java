@@ -1,17 +1,17 @@
 package com.amazon.java.parser.antlr;
 
-import com.amazon.java.GenericContext;
-import com.amazon.java.GenericParameter;
 import com.amazon.java.TypeDefinition;
+import com.amazon.java.TypeParameter;
+import com.amazon.java.TypeParameterContext;
 
-class AntlrGenericParameter implements GenericParameter {
+class AntlrTypeParameter implements TypeParameter {
 
     private final String name;
     private final BoundaryModifier boundaryModifier;
     private final TypeDefinition boundaryType;
-    private final GenericContext context;
+    private final TypeParameterContext context;
 
-    AntlrGenericParameter(String name, BoundaryModifier boundaryModifier, TypeDefinition boundaryType, GenericContext context) {
+    AntlrTypeParameter(String name, BoundaryModifier boundaryModifier, TypeDefinition boundaryType, TypeParameterContext context) {
         this.name = name;
         this.boundaryModifier = boundaryModifier;
         this.boundaryType = boundaryType;
@@ -34,7 +34,7 @@ class AntlrGenericParameter implements GenericParameter {
     }
 
     @Override
-    public GenericContext getContext() {
+    public TypeParameterContext getContext() {
         return context;
     }
 }

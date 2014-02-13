@@ -1,25 +1,15 @@
 package com.amazon.java.parser.antlr;
 
+import com.amazon.java.*;
+import com.amazon.java.parser.JavaSourceParser;
+import org.junit.Test;
+
 import java.io.Reader;
 import java.io.StringReader;
 
-import org.junit.Test;
-
-import com.amazon.java.ClassDefinition;
-import com.amazon.java.GenericContext;
-import com.amazon.java.GenericParameter;
-import com.amazon.java.MethodDefinition;
-import com.amazon.java.TypeDefinition;
-import com.amazon.java.Variable;
-import com.amazon.java.parser.JavaSourceParser;
-
-import static com.amazon.java.GenericParameter.BoundaryModifier.EXTENDS;
+import static com.amazon.java.TypeParameter.BoundaryModifier.EXTENDS;
 import static com.amazon.java.parser.ParserMatchers.isSimpleFqcnType;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 public class AntlrJavaSourceParserTest {
@@ -31,22 +21,22 @@ public class AntlrJavaSourceParserTest {
         final ClassDefinition definition = parser.parse(from("public class Testname {}"));
 
         assertThat(definition.getType().getFqcn(), equalTo("Testname"));
-        assertThat(definition.getType().getGenericArguments(), hasSize(0));
+        assertThat(definition.getType().getGenericTypeParameters(), hasSize(0));
     }
 
     @Test
     public void extractsSingleGenericTypeParameterRight() throws Exception {
         final ClassDefinition definition = parser.parse(from("public class Testname<T> {}"));
 
-        assertThat(definition.getType().getGenericArguments(), hasSize(1));
+        assertThat(definition.getType().getGenericTypeParameters(), hasSize(1));
 
-        final TypeDefinition typeDef = definition.getType().getGenericArguments().get(0);
+        final TypeDefinition typeDef = definition.getType().getGenericTypeParameters().get(0);
         assertThat(typeDef.getFqcn(), nullValue());
-        assertThat(typeDef.getGenericArguments(), hasSize(0));
-        final GenericParameter param = typeDef.getGenericParam();
+        assertThat(typeDef.getGenericTypeParameters(), hasSize(0));
+        final TypeParameter param = typeDef.getTypeParameter();
         assertThat(param.getName(), equalTo("T"));
 
-        final GenericContext ctx = param.getContext();
+        final TypeParameterContext ctx = param.getContext();
         assertThat(ctx, notNullValue());
         assertThat(param, notNullValue());
         assertThat(param.getBoundaryModifier(), equalTo(EXTENDS));
@@ -59,24 +49,24 @@ public class AntlrJavaSourceParserTest {
     public void extractsTwoGenericTypeParameterRight() throws Exception {
         final ClassDefinition definition = parser.parse(from("public class Testname<T, E> {}"));
 
-        assertThat(definition.getType().getGenericArguments(), hasSize(2));
+        assertThat(definition.getType().getGenericTypeParameters(), hasSize(2));
 
-        assertThat(definition.getType().getGenericArguments().get(0).getGenericParam().getName(), equalTo("T"));
-        assertThat(definition.getType().getGenericArguments().get(1).getGenericParam().getName(), equalTo("E"));
+        assertThat(definition.getType().getGenericTypeParameters().get(0).getTypeParameter().getName(), equalTo("T"));
+        assertThat(definition.getType().getGenericTypeParameters().get(1).getTypeParameter().getName(), equalTo("E"));
     }
 
     @Test
     public void extractsExtendsBoundTypeInGenericParameter() throws Exception {
         final ClassDefinition definition = parser.parse(from("public class Testname<T extends Number> {}"));
 
-        assertThat(definition.getType().getGenericArguments(), hasSize(1));
+        assertThat(definition.getType().getGenericTypeParameters(), hasSize(1));
 
-        final TypeDefinition typeDef = definition.getType().getGenericArguments().get(0);
+        final TypeDefinition typeDef = definition.getType().getGenericTypeParameters().get(0);
         assertThat(typeDef.getFqcn(), nullValue());
-        assertThat(typeDef.getGenericArguments(), hasSize(0));
+        assertThat(typeDef.getGenericTypeParameters(), hasSize(0));
 
-        final GenericParameter param = typeDef.getGenericParam();
-        assertThat(typeDef.getGenericParam().getName(), equalTo("T"));
+        final TypeParameter param = typeDef.getTypeParameter();
+        assertThat(typeDef.getTypeParameter().getName(), equalTo("T"));
 
         assertThat(param.getContext(), notNullValue());
         assertThat(param, notNullValue());
@@ -90,10 +80,10 @@ public class AntlrJavaSourceParserTest {
     public void returnsQualifiedBoundaryNamesWhereAvailable() throws Exception {
         final ClassDefinition definition = parser.parse(from("import java.util.Number;\npublic class Testname<T extends Number> {}"));
 
-        assertThat(definition.getType().getGenericArguments(), hasSize(1));
+        assertThat(definition.getType().getGenericTypeParameters(), hasSize(1));
 
-        final TypeDefinition typeDef = definition.getType().getGenericArguments().get(0);
-        final GenericParameter param = typeDef.getGenericParam();
+        final TypeDefinition typeDef = definition.getType().getGenericTypeParameters().get(0);
+        final TypeParameter param = typeDef.getTypeParameter();
         final TypeDefinition boundaryType = param.getBoundaryType();
         assertThat(boundaryType, isSimpleFqcnType("java.util.Number"));
     }
@@ -103,7 +93,7 @@ public class AntlrJavaSourceParserTest {
         final ClassDefinition definition = parser.parse(from("package com.amazon;\n\npublic class SomeName {}"));
 
         assertThat(definition.getType(), isSimpleFqcnType("com.amazon.SomeName"));
-        assertThat(definition.getType().getGenericArguments(), hasSize(0));
+        assertThat(definition.getType().getGenericTypeParameters(), hasSize(0));
     }
 
     @Test
@@ -125,26 +115,26 @@ public class AntlrJavaSourceParserTest {
             "}\n";
         final ClassDefinition definition = parser.parse(from(source));
 
-        assertThat(definition.getType().getGenericArguments(), hasSize(5));
-        assertThat(definition.getType().getGenericArguments().get(0).getGenericParam().getName(), equalTo("R"));
-        assertThat(definition.getType().getGenericArguments().get(0).getGenericParam().getBoundaryModifier(), equalTo(EXTENDS));
-        assertThat(definition.getType().getGenericArguments().get(0).getGenericParam().getBoundaryType(), isSimpleFqcnType("com.amazon.fenix.client.v2.DetailPageRequest"));
+        assertThat(definition.getType().getGenericTypeParameters(), hasSize(5));
+        assertThat(definition.getType().getGenericTypeParameters().get(0).getTypeParameter().getName(), equalTo("R"));
+        assertThat(definition.getType().getGenericTypeParameters().get(0).getTypeParameter().getBoundaryModifier(), equalTo(EXTENDS));
+        assertThat(definition.getType().getGenericTypeParameters().get(0).getTypeParameter().getBoundaryType(), isSimpleFqcnType("com.amazon.fenix.client.v2.DetailPageRequest"));
 
-        assertThat(definition.getType().getGenericArguments().get(1).getGenericParam().getName(), equalTo("P"));
-        assertThat(definition.getType().getGenericArguments().get(1).getGenericParam().getBoundaryModifier(), equalTo(EXTENDS));
-        assertThat(definition.getType().getGenericArguments().get(1).getGenericParam().getBoundaryType(), isSimpleFqcnType("com.amazon.fenix.client.v2.ProductAdsProgram"));
+        assertThat(definition.getType().getGenericTypeParameters().get(1).getTypeParameter().getName(), equalTo("P"));
+        assertThat(definition.getType().getGenericTypeParameters().get(1).getTypeParameter().getBoundaryModifier(), equalTo(EXTENDS));
+        assertThat(definition.getType().getGenericTypeParameters().get(1).getTypeParameter().getBoundaryType(), isSimpleFqcnType("com.amazon.fenix.client.v2.ProductAdsProgram"));
 
-        assertThat(definition.getType().getGenericArguments().get(2).getGenericParam().getName(), equalTo("RD"));
-        assertThat(definition.getType().getGenericArguments().get(2).getGenericParam().getBoundaryModifier(), equalTo(EXTENDS));
-        assertThat(definition.getType().getGenericArguments().get(2).getGenericParam().getBoundaryType(), isSimpleFqcnType("com.amazon.fenix.v2.ProductAdsRequestDecoration"));
+        assertThat(definition.getType().getGenericTypeParameters().get(2).getTypeParameter().getName(), equalTo("RD"));
+        assertThat(definition.getType().getGenericTypeParameters().get(2).getTypeParameter().getBoundaryModifier(), equalTo(EXTENDS));
+        assertThat(definition.getType().getGenericTypeParameters().get(2).getTypeParameter().getBoundaryType(), isSimpleFqcnType("com.amazon.fenix.v2.ProductAdsRequestDecoration"));
 
-        assertThat(definition.getType().getGenericArguments().get(3).getGenericParam().getName(), equalTo("A"));
-        assertThat(definition.getType().getGenericArguments().get(3).getGenericParam().getBoundaryModifier(), equalTo(EXTENDS));
-        assertThat(definition.getType().getGenericArguments().get(3).getGenericParam().getBoundaryType(), isSimpleFqcnType("com.amazon.fenix.model.ad.Ad"));
+        assertThat(definition.getType().getGenericTypeParameters().get(3).getTypeParameter().getName(), equalTo("A"));
+        assertThat(definition.getType().getGenericTypeParameters().get(3).getTypeParameter().getBoundaryModifier(), equalTo(EXTENDS));
+        assertThat(definition.getType().getGenericTypeParameters().get(3).getTypeParameter().getBoundaryType(), isSimpleFqcnType("com.amazon.fenix.model.ad.Ad"));
 
-        assertThat(definition.getType().getGenericArguments().get(4).getGenericParam().getName(), equalTo("D"));
-        assertThat(definition.getType().getGenericArguments().get(4).getGenericParam().getBoundaryModifier(), equalTo(EXTENDS));
-        assertThat(definition.getType().getGenericArguments().get(4).getGenericParam().getBoundaryType(), isSimpleFqcnType("com.amazon.fenix.model.decorationentity.SponsoredOfferListingDecorationEntity"));
+        assertThat(definition.getType().getGenericTypeParameters().get(4).getTypeParameter().getName(), equalTo("D"));
+        assertThat(definition.getType().getGenericTypeParameters().get(4).getTypeParameter().getBoundaryModifier(), equalTo(EXTENDS));
+        assertThat(definition.getType().getGenericTypeParameters().get(4).getTypeParameter().getBoundaryType(), isSimpleFqcnType("com.amazon.fenix.model.decorationentity.SponsoredOfferListingDecorationEntity"));
     }
 
     @Test
@@ -167,7 +157,7 @@ public class AntlrJavaSourceParserTest {
 
         final Variable constructorArg = constructor.getArguments().get(0);
         assertThat(constructorArg.getType(), isSimpleFqcnType("com.amazon.Number"));
-        assertThat(constructorArg.getType().getGenericArguments(), hasSize(0));
+        assertThat(constructorArg.getType().getGenericTypeParameters(), hasSize(0));
         assertThat(constructorArg.getName(), equalTo("arg"));
     }
 
@@ -187,9 +177,9 @@ public class AntlrJavaSourceParserTest {
         final MethodDefinition constructor = definition.getConstructors().get(0);
         final Variable constructorArg = constructor.getArguments().get(0);
         assertThat(constructorArg.getType().getFqcn(), equalTo("com.amazon.List"));
-        assertThat(constructorArg.getType().getGenericArguments(), hasSize(1));
+        assertThat(constructorArg.getType().getGenericTypeParameters(), hasSize(1));
 
-        final TypeDefinition genericArg = constructorArg.getType().getGenericArguments().get(0);
+        final TypeDefinition genericArg = constructorArg.getType().getGenericTypeParameters().get(0);
         assertThat(genericArg, isSimpleFqcnType("com.amazon.Number"));
     }
 
@@ -209,10 +199,10 @@ public class AntlrJavaSourceParserTest {
         assertThat(definition.getConstructors(), hasSize(1));
         final MethodDefinition constructor = definition.getConstructors().get(0);
         final Variable constructorArg = constructor.getArguments().get(0);
-        final GenericParameter genericParameter = constructorArg.getType().getGenericArguments().get(0).getGenericParam();
-        assertThat(genericParameter.getName(), equalTo("T"));
-        assertThat(genericParameter.getBoundaryModifier(), equalTo(EXTENDS));
-        assertThat(genericParameter.getBoundaryType(), isSimpleFqcnType("com.amazon.Number"));
+        final TypeParameter typeParameter = constructorArg.getType().getGenericTypeParameters().get(0).getTypeParameter();
+        assertThat(typeParameter.getName(), equalTo("T"));
+        assertThat(typeParameter.getBoundaryModifier(), equalTo(EXTENDS));
+        assertThat(typeParameter.getBoundaryType(), isSimpleFqcnType("com.amazon.Number"));
     }
 
     @Test

@@ -1,12 +1,11 @@
 package com.amazon.java.parser.antlr;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.amazon.java.TypeDefinition;
+import com.amazon.java.TypeParameter;
 import org.antlr.v4.runtime.misc.NotNull;
 
-import com.amazon.java.GenericParameter;
-import com.amazon.java.TypeDefinition;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TypeExtractor extends StackTreeListener {
 
@@ -26,8 +25,8 @@ public class TypeExtractor extends StackTreeListener {
     @Override
     public void enterClassOrInterfaceType(@NotNull JavaParser.ClassOrInterfaceTypeContext ctx) {
         final String name = ctx.getChild(0).getText();
-        final GenericParameter genericParameter = parent.getCurrentGenericContext().get(name);
-        if (genericParameter != null) {
+        final TypeParameter typeParameter = parent.getCurrentGenericContext().get(name);
+        if (typeParameter != null) {
             generic = name;
         } else {
             fqcn = parent.getImports().get(name) == null ? name : parent.getImports().get(name);
@@ -52,7 +51,7 @@ public class TypeExtractor extends StackTreeListener {
 
     public TypeDefinition makeType() {
         return new AntlrTypeDefinition(
-                fqcn, genericTypes, generic == null ? null : parent.getClassGenericContext().get(generic)
+                fqcn, genericTypes, generic == null ? null : parent.getClassTypeParameterContext().get(generic)
         );
     }
 

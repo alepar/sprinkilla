@@ -1,13 +1,13 @@
 package com.amazon.java;
 
-public interface GenericParameter {
+public interface TypeParameter {
     String getName();
 
     BoundaryModifier getBoundaryModifier();
 
     TypeDefinition getBoundaryType();
 
-    GenericContext getContext();
+    TypeParameterContext getContext();
 
     public enum BoundaryModifier {
         SUPER, EXTENDS

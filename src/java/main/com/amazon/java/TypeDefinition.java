@@ -1,9 +1,9 @@
 package com.amazon.java;
 
+import com.amazon.java.parser.antlr.AntlrTypeDefinition;
+
 import java.util.Collections;
 import java.util.List;
-
-import com.amazon.java.parser.antlr.AntlrTypeDefinition;
 
 public interface TypeDefinition {
 
@@ -11,7 +11,7 @@ public interface TypeDefinition {
 
     String getFqcn();
 
-    List<TypeDefinition> getGenericArguments();
+    List<TypeDefinition> getGenericTypeParameters();
 
-    GenericParameter getGenericParam();
+    TypeParameter getTypeParameter();
 }

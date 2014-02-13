@@ -1,22 +1,21 @@
 package com.amazon.java.parser.antlr;
 
+import com.amazon.java.TypeDefinition;
+import com.amazon.java.TypeParameter;
+import org.antlr.v4.runtime.misc.NotNull;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import org.antlr.v4.runtime.misc.NotNull;
-
-import com.amazon.java.GenericParameter;
-import com.amazon.java.TypeDefinition;
 
 public class GenericParametersExtractor extends StackTreeListener {
 
     private final SourceFileClassExtractor parent;
 
-    private final List<GenericParameter> genericParameters = new ArrayList<>();
+    private final List<TypeParameter> typeParameters = new ArrayList<>();
 
     private String name;
-    private GenericParameter.BoundaryModifier boundaryModifier;
+    private TypeParameter.BoundaryModifier boundaryModifier;
     private TypeDefinition boundaryType;
     private TypeExtractor child;
 
@@ -30,19 +29,19 @@ public class GenericParametersExtractor extends StackTreeListener {
         name = ctx.getChild(0).getText();
         if (ctx.getChildCount() == 1) {
             boundaryType = new AntlrTypeDefinition("java.lang.Object", Collections.<TypeDefinition>emptyList(), null);
-            boundaryModifier = GenericParameter.BoundaryModifier.EXTENDS;
+            boundaryModifier = TypeParameter.BoundaryModifier.EXTENDS;
         } else {
             if ("super".equals(ctx.getChild(1).getText())) {
-                boundaryModifier = GenericParameter.BoundaryModifier.SUPER;
+                boundaryModifier = TypeParameter.BoundaryModifier.SUPER;
             } else {
-                boundaryModifier = GenericParameter.BoundaryModifier.EXTENDS;
+                boundaryModifier = TypeParameter.BoundaryModifier.EXTENDS;
             }
         }
     }
 
     @Override
     public void exitTypeParameter(@NotNull JavaParser.TypeParameterContext ctx) {
-        genericParameters.add(new AntlrGenericParameter(
+        typeParameters.add(new AntlrTypeParameter(
             name, boundaryModifier, boundaryType, parent.getCurrentGenericContext())
         );
     }
@@ -51,7 +50,7 @@ public class GenericParametersExtractor extends StackTreeListener {
     public void exitTypeParameters(@NotNull JavaParser.TypeParametersContext ctx) {
         walker.pop();
 
-        for (GenericParameter parameter : genericParameters) {
+        for (TypeParameter parameter : typeParameters) {
             parent.getCurrentGenericContext().add(parameter);
         }
     }

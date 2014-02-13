@@ -1,19 +1,18 @@
 package com.amazon.java.parser.antlr;
 
+import com.amazon.java.MethodDefinition;
+import com.amazon.java.TypeDefinition;
+import com.amazon.java.TypeParameterContext;
+import com.amazon.java.Variable;
+import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.tree.TerminalNode;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.tree.TerminalNode;
-
-import com.amazon.java.GenericContext;
-import com.amazon.java.MethodDefinition;
-import com.amazon.java.TypeDefinition;
-import com.amazon.java.Variable;
 
 public class SourceFileClassExtractor extends StackTreeListener {
 
@@ -22,7 +21,7 @@ public class SourceFileClassExtractor extends StackTreeListener {
 
     private final Map<String, String> imports = new HashMap<>();
     private final List<MethodDefinition> constructors = new ArrayList<>();
-    private final GenericContext classGenericContext = new AntlrGenericContext();
+    private final TypeParameterContext classTypeParameterContext = new AntlrTypeParameterContext();
     private final List<TypeDefinition> parentTypes = new ArrayList<>();
     private String name;
     private String packageName;
@@ -176,12 +175,12 @@ public class SourceFileClassExtractor extends StackTreeListener {
         return imports;
     }
 
-    public GenericContext getCurrentGenericContext() {
-        return classGenericContext;
+    public TypeParameterContext getCurrentGenericContext() {
+        return classTypeParameterContext;
     }
 
-    public GenericContext getClassGenericContext() {
-        return classGenericContext;
+    public TypeParameterContext getClassTypeParameterContext() {
+        return classTypeParameterContext;
     }
 
     static String extractClassName(String fqcn) {

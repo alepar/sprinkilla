@@ -1,8 +1,5 @@
 package com.amazon.spring;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.amazon.java.IndexedTypeHierarchy;
 import com.amazon.java.JavaSourceRepository;
 import com.amazon.java.MapDefinitionProvider;
@@ -11,6 +8,8 @@ import com.amazon.spring.parser.SpringBeanParser;
 import com.amazon.spring.parser.XercesSpringBeanParser;
 import com.amazon.spring.resolver.ResolvedTypes;
 import com.amazon.spring.resolver.SpringBeanTypeValidator;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -115,6 +114,34 @@ public class SpringBeanTypeValidatorTest {
         repository.addSource(sourceForBeanClass);
         repository.addSource(sourceForActualArgument);
         repository.addSource(sourceForExpectedArgument);
+
+        final BeanDefinition bean = springBeanParser.parse(xml);
+        final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
+        final ResolvedTypes types = resolver.validateAndResolve(bean);
+
+        assertThat(types.isValid(), equalTo(true));
+    }
+
+    @Test
+    public void passesValidationWhenExpectedClassAndPassedInHaveEqualTypeVariable() throws Exception {
+        final String xml =
+                "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
+                "    <constructor-arg name=\"one\">\n" +
+                "        <bean id=\"oneArg\" class=\"com.amazon.SomeType\" />\n" +
+                "    </constructor-arg>\n" +
+                "</bean>\n";
+        final String sourceForNumberProcessor =
+                "package com.amazon;\n" +
+                "\n" +
+                "public class NumberProcessor {\n" +
+                "    public NumberProcessor(List<Number> numbers) {}\n" +
+                "}";
+        final String sourceForListOfDoubles =
+                "package com.amazon;\n" +
+                "\n" +
+                "public class SomeType extends com.amazon.List<Number> { }";
+        repository.addSource(sourceForNumberProcessor);
+        repository.addSource(sourceForListOfDoubles);
 
         final BeanDefinition bean = springBeanParser.parse(xml);
         final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);

@@ -1,17 +1,17 @@
 package com.amazon.java.parser.antlr;
 
-import java.util.List;
-
-import com.amazon.java.GenericParameter;
 import com.amazon.java.TypeDefinition;
+import com.amazon.java.TypeParameter;
+
+import java.util.List;
 
 public class AntlrTypeDefinition implements TypeDefinition {
 
     private final String fqcn;
     private final List<TypeDefinition> genericTypes;
-    private final GenericParameter genericParam;
+    private final TypeParameter genericParam;
 
-    public AntlrTypeDefinition(String fqcn, List<TypeDefinition> genericTypes, GenericParameter genericParam) {
+    public AntlrTypeDefinition(String fqcn, List<TypeDefinition> genericTypes, TypeParameter genericParam) {
         this.fqcn = fqcn;
         this.genericTypes = genericTypes;
         this.genericParam = genericParam;
@@ -23,12 +23,12 @@ public class AntlrTypeDefinition implements TypeDefinition {
     }
 
     @Override
-    public List<TypeDefinition> getGenericArguments() {
+    public List<TypeDefinition> getGenericTypeParameters() {
         return genericTypes;
     }
 
     @Override
-    public GenericParameter getGenericParam() {
+    public TypeParameter getTypeParameter() {
         return genericParam;
     }
 

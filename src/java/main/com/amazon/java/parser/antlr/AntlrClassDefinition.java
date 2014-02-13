@@ -1,14 +1,10 @@
 package com.amazon.java.parser.antlr;
 
+import com.amazon.java.*;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import com.amazon.java.ClassDefinition;
-import com.amazon.java.GenericContext;
-import com.amazon.java.GenericParameter;
-import com.amazon.java.MethodDefinition;
-import com.amazon.java.TypeDefinition;
 
 public class AntlrClassDefinition implements ClassDefinition {
 
@@ -21,14 +17,14 @@ public class AntlrClassDefinition implements ClassDefinition {
         this.constructors = extractor.getConstructors();
         this.type = new AntlrTypeDefinition(
                 extractor.getPackageName() == null || extractor.getPackageName().isEmpty() ? extractor.getName() : extractor.getPackageName() + '.' + extractor.getName(),
-                extractGenericTypes(extractor.getClassGenericContext()),
+                extractGenericTypes(extractor.getClassTypeParameterContext()),
                 null
         );
     }
 
-    private List<TypeDefinition> extractGenericTypes(GenericContext ctx) {
+    private List<TypeDefinition> extractGenericTypes(TypeParameterContext ctx) {
         final List<TypeDefinition> types = new ArrayList<>(ctx.getParams().size());
-        for (GenericParameter param : ctx.getParams()) {
+        for (TypeParameter param : ctx.getParams()) {
             types.add(new AntlrTypeDefinition(
                     null,
                     Collections.<TypeDefinition>emptyList(),
