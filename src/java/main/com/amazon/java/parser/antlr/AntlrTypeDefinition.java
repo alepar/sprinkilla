@@ -1,9 +1,9 @@
 package com.amazon.java.parser.antlr;
 
+import java.util.List;
+
 import com.amazon.java.TypeDefinition;
 import com.amazon.java.TypeParameter;
-
-import java.util.List;
 
 public class AntlrTypeDefinition implements TypeDefinition {
 
@@ -52,5 +52,23 @@ public class AntlrTypeDefinition implements TypeDefinition {
         result = 31 * result + (genericTypes != null ? genericTypes.hashCode() : 0);
         result = 31 * result + (genericParam != null ? genericParam.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        if (fqcn != null) {
+            sb.append(fqcn);
+        } else {
+            sb.append(genericParam.toString());
+        }
+        if (genericTypes != null && !genericTypes.isEmpty()) {
+            sb.append('<');
+            for (TypeDefinition genericType : genericTypes) {
+                sb.append(genericType).append(", ");
+            }
+            sb.append('>');
+        }
+        return sb.toString();
     }
 }

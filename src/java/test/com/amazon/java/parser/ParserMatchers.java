@@ -1,9 +1,10 @@
 package com.amazon.java.parser;
 
-import com.amazon.java.TypeDefinition;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+
+import com.amazon.java.TypeDefinition;
 
 public class ParserMatchers {
 
@@ -21,7 +22,7 @@ public class ParserMatchers {
 
             @Override
             public void describeTo(Description description) {
-                description.appendText("type definition with fqcn").appendValue(fqcn);
+                description.appendText("type definition with fqcn ").appendValue(fqcn);
             }
         };
     }

@@ -37,4 +37,11 @@ class AntlrTypeParameter implements TypeParameter {
     public TypeParameterContext getContext() {
         return context;
     }
+
+    @Override
+    public String toString() {
+        return name + ' ' +
+               boundaryModifier.name().toLowerCase() + ' ' +
+               boundaryType;
+    }
 }

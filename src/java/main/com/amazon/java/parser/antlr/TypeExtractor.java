@@ -1,21 +1,25 @@
 package com.amazon.java.parser.antlr;
 
-import com.amazon.java.TypeDefinition;
-import com.amazon.java.TypeParameter;
-import org.antlr.v4.runtime.misc.NotNull;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.tree.TerminalNode;
+
+import com.amazon.java.TypeDefinition;
+import com.amazon.java.TypeParameter;
 
 public class TypeExtractor extends StackTreeListener {
 
     private final SourceFileClassExtractor parent;
+    private State state = State.FQCN_COMING;
 
     private List<TypeDefinition> genericTypes = new ArrayList<>();
     private String fqcn;
     private String generic;
 
     private TypeExtractor child;
+    private StringBuilder terminals = new StringBuilder();
 
     public TypeExtractor(StackTreeWalker walker, SourceFileClassExtractor parent) {
         super(walker);
@@ -23,13 +27,25 @@ public class TypeExtractor extends StackTreeListener {
     }
 
     @Override
-    public void enterClassOrInterfaceType(@NotNull JavaParser.ClassOrInterfaceTypeContext ctx) {
-        final String name = ctx.getChild(0).getText();
-        final TypeParameter typeParameter = parent.getCurrentGenericContext().get(name);
+    public void visitTerminal(@NotNull TerminalNode node) {
+        if (state == State.FQCN_COMING) {
+            terminals.append(node.getText());
+        }
+    }
+
+    @Override
+    public void enterTypeArguments(@NotNull JavaParser.TypeArgumentsContext ctx) {
+        state = State.FQCN_ENDED;
+    }
+
+    @Override
+    public void exitClassOrInterfaceType(@NotNull JavaParser.ClassOrInterfaceTypeContext ctx) {
+        final String accumulatedName = terminals.toString();
+        final TypeParameter typeParameter = parent.getCurrentGenericContext().get(accumulatedName);
         if (typeParameter != null) {
-            generic = name;
+            generic = accumulatedName;
         } else {
-            fqcn = parent.getImports().get(name) == null ? name : parent.getImports().get(name);
+            fqcn = parent.getImports().get(accumulatedName) == null ? accumulatedName : parent.getImports().get(accumulatedName);
         }
     }
 
@@ -55,4 +71,7 @@ public class TypeExtractor extends StackTreeListener {
         );
     }
 
+    private static enum State {
+        FQCN_COMING, FQCN_ENDED
+    }
 }

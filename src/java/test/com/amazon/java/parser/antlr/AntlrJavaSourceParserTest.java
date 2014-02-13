@@ -1,15 +1,30 @@
 package com.amazon.java.parser.antlr;
 
-import com.amazon.java.*;
-import com.amazon.java.parser.JavaSourceParser;
-import org.junit.Test;
-
 import java.io.Reader;
 import java.io.StringReader;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.LoggerFactory;
+
+import com.amazon.java.ClassDefinition;
+import com.amazon.java.MethodDefinition;
+import com.amazon.java.TypeDefinition;
+import com.amazon.java.TypeParameter;
+import com.amazon.java.TypeParameterContext;
+import com.amazon.java.Variable;
+import com.amazon.java.parser.JavaSourceParser;
+
 import static com.amazon.java.TypeParameter.BoundaryModifier.EXTENDS;
 import static com.amazon.java.parser.ParserMatchers.isSimpleFqcnType;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class AntlrJavaSourceParserTest {
@@ -244,6 +259,38 @@ public class AntlrJavaSourceParserTest {
         ));
 
         assertThat(definition.getParentTypes(), contains(isSimpleFqcnType("java.lang.Object")));
+    }
+
+    @Test
+    public void extractsFullyQualifiedTypesProperly() throws Exception {
+        final ClassDefinition definition = parser.parse(from(
+                "public class Testname implements com.amazon.List {\n" +
+                "\n" +
+                "\tpublic Testname(com.amazon.Number num) { }\n" +
+                "\n" +
+                "}"
+        ));
+
+        assertThat(definition.getParentTypes(), contains(isSimpleFqcnType("com.amazon.List")));
+        assertThat(definition.getConstructors().get(0).getArguments().get(0).getType(), isSimpleFqcnType("com.amazon.Number"));
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        /* some extra logging that is immensely useful when fixing unit tests in this class
+         * unfortunately this is a hack that relies on logback being our logging framework
+         * fortunately omitting this is safe and will not break unit tests
+         */
+        setParserLoggingLevelTo(Level.TRACE);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        setParserLoggingLevelTo(Level.DEBUG);
+    }
+
+    private static void setParserLoggingLevelTo(Level level) {
+        ((Logger) LoggerFactory.getLogger("com.amazon.java.parser.antlr.StackTreeWalker")).setLevel(level);
     }
 
     private static Reader from(String s) {
