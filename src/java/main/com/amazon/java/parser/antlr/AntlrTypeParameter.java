@@ -4,14 +4,14 @@ import com.amazon.java.TypeDefinition;
 import com.amazon.java.TypeParameter;
 import com.amazon.java.TypeParameterContext;
 
-class AntlrTypeParameter implements TypeParameter {
+public class AntlrTypeParameter implements TypeParameter {
 
     private final String name;
     private final BoundaryModifier boundaryModifier;
     private final TypeDefinition boundaryType;
     private final TypeParameterContext context;
 
-    AntlrTypeParameter(String name, BoundaryModifier boundaryModifier, TypeDefinition boundaryType, TypeParameterContext context) {
+    public AntlrTypeParameter(String name, BoundaryModifier boundaryModifier, TypeDefinition boundaryType, TypeParameterContext context) {
         this.name = name;
         this.boundaryModifier = boundaryModifier;
         this.boundaryType = boundaryType;

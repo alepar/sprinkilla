@@ -2,7 +2,6 @@ package com.amazon.spring;
 
 import org.junit.Test;
 
-import com.amazon.java.IndexedTypeHierarchy;
 import com.amazon.java.JavaSourceRepository;
 import com.amazon.java.MapDefinitionProvider;
 import com.amazon.java.parser.antlr.AntlrJavaSourceParser;
@@ -16,7 +15,7 @@ import static org.junit.Assert.assertThat;
 
 public class SpringBeanTypeValidatorTest {
 
-    private final JavaSourceRepository repository = new JavaSourceRepository(new IndexedTypeHierarchy(), new MapDefinitionProvider(), new AntlrJavaSourceParser());
+    private final JavaSourceRepository repository = new JavaSourceRepository(new MapDefinitionProvider(), new AntlrJavaSourceParser());
 
     private final SpringBeanParser springBeanParser = new XercesSpringBeanParser();
 
@@ -237,4 +236,5 @@ public class SpringBeanTypeValidatorTest {
         final ResolvedArguments arg = types.getTypesFor(bean);
         assertThat(arg.getTypeFor("T"), equalTo("Double"));
     }
+
 }

@@ -6,20 +6,19 @@ import com.amazon.java.parser.JavaSourceParser;
 
 public class JavaSourceRepository implements TypeHierarchy, ClassDefinitionProvider {
 
-    private final MutableTypeHierarchy typeHierarchy;
+    private final IndexedTypeHierarchy typeHierarchy;
     private final MutableClassDefinitionProvider definitionProvider;
     private final JavaSourceParser javaSourceParser;
 
-    public JavaSourceRepository(MutableTypeHierarchy typeHierarchy, MutableClassDefinitionProvider definitionProvider, JavaSourceParser javaSourceParser) {
-        this.typeHierarchy = typeHierarchy;
-        this.definitionProvider = definitionProvider;
+    public JavaSourceRepository(MutableClassDefinitionProvider definitionProvider, JavaSourceParser javaSourceParser) {
         this.javaSourceParser = javaSourceParser;
+        this.definitionProvider = definitionProvider;
+        this.typeHierarchy = new IndexedTypeHierarchy(definitionProvider);
     }
 
     public void addSource(String source) {
         final ClassDefinition classDefinition = javaSourceParser.parse(new StringReader(source));
         definitionProvider.addDefinition(classDefinition);
-        typeHierarchy.addDefinition(classDefinition);
     }
 
     @Override
