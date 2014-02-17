@@ -19,6 +19,10 @@ public class IndexedTypeHierarchy implements TypeHierarchy {
 
     @Override
     public boolean isAssignable(TypeDefinition src, TypeDefinition dest) {
+        return isAssignable(src, dest, true);
+    }
+
+    private boolean isAssignable(TypeDefinition src, TypeDefinition dest, boolean allowSubclasses) {
         if (src.getFqcn() != null) {
 
             // src is not a captured type
@@ -33,34 +37,38 @@ public class IndexedTypeHierarchy implements TypeHierarchy {
                     }
 
                     for (int i=0; i< srcTypeParams.size(); i++) {
-                        if(!isAssignable(srcTypeParams.get(i), dstTypeParams.get(i))) {
+                        if(!isAssignable(srcTypeParams.get(i), dstTypeParams.get(i), false)) {
                             return false;
                         }
                     }
 
                     return true;
-                } else {
+                } else if (allowSubclasses) {
                     // types are not equal, try to go up the inheritance chain
                     final Set<Deque<TypeDefinition>> paths = listAllInheritancePaths(src);
                     for (Deque<TypeDefinition> path : paths) {
                         for (TypeDefinition parent : path) {
                             if (dest.getFqcn().equals(parent.getFqcn())) { // if we found parent with needed type
-                                return isAssignable(parent, dest);         // just check for covariance
+                                return isAssignable(parent, dest, false);         // just check for covariance
                             }
                         }
                     }
+                    return false;
+                } else {
                     return false;
                 }
             } else {
                 // dest is captured type, we're inside covariance check
                 if (dest.getTypeParameter().getBoundaryModifier().equals(TypeParameter.BoundaryModifier.EXTENDS)) {
-                    return isAssignable(src, dest.getTypeParameter().getBoundaryType());
+                    return isAssignable(src, dest.getTypeParameter().getBoundaryType(), true);
                 } else {
                     return false; // SUPER not supported
                 }
 
             }
         } else {
+//            if () {
+//            }
 
             //src is captured type, not supported yet
             return false;

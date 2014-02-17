@@ -188,6 +188,100 @@ public class SpringBeanTypeValidatorTest {
     }
 
     @Test
+    public void passesValidationForCovariantTypes() throws Exception {
+        final String xml =
+                "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
+                "    <constructor-arg name=\"one\">\n" +
+                "        <bean id=\"oneArg\" class=\"com.amazon.ListOfDoubles\" />\n" +
+                "    </constructor-arg>\n" +
+                "</bean>\n";
+        final String sourceForNumberProcessor =
+                "package com.amazon;\n" +
+                "\n" +
+                "import java.util.List;\n" +
+                "\n" +
+                "public class NumberProcessor<T extends com.amazon.Number> {\n" +
+                "    public NumberProcessor(List<T> numbers) {}\n" +
+                "}";
+        final String sourceForListOfDoubles =
+                "package com.amazon;\n" +
+                "\n" +
+                "import java.util.List;\n" +
+                "\n" +
+                "public class ListOfDoubles implements List<com.amazon.Double> { }";
+        final String sourceForList =
+                "package java.util;\n" +
+                "\n" +
+                "public class List<T> {}";
+        final String sourceForNumber =
+                "package com.amazon;\n" +
+                "\n" +
+                "public class Number {}";
+        final String sourceForDouble =
+                "package com.amazon;\n" +
+                "\n" +
+                "public class Double extends com.amazon.Number {}";
+        repository.addSource(sourceForNumberProcessor);
+        repository.addSource(sourceForListOfDoubles);
+        repository.addSource(sourceForList);
+        repository.addSource(sourceForNumber);
+        repository.addSource(sourceForDouble);
+
+        final BeanDefinition bean = springBeanParser.parse(xml);
+        final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
+
+        final ResolvedTypes types = resolver.validateAndResolve(bean);
+        assertThat(types.isValid(), equalTo(true));
+    }
+
+    @Test
+    public void passesValidationForInvariantTypes() throws Exception {
+        final String xml =
+                "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
+                "    <constructor-arg name=\"one\">\n" +
+                "        <bean id=\"oneArg\" class=\"com.amazon.ListOfDoubles\" />\n" +
+                "    </constructor-arg>\n" +
+                "</bean>\n";
+        final String sourceForNumberProcessor =
+                "package com.amazon;\n" +
+                "\n" +
+                "import java.util.List;\n" +
+                "\n" +
+                "public class NumberProcessor<T extends com.amazon.Number> {\n" +
+                "    public NumberProcessor(List<T> numbers) {}\n" +
+                "}";
+        final String sourceForListOfDoubles =
+                "package com.amazon;\n" +
+                "\n" +
+                "import java.util.List;\n" +
+                "\n" +
+                "public class ListOfDoubles implements List<com.amazon.Double> { }";
+        final String sourceForList =
+                "package java.util;\n" +
+                "\n" +
+                "public class List<T> {}";
+        final String sourceForNumber =
+                "package com.amazon;\n" +
+                "\n" +
+                "public class Number {}";
+        final String sourceForDouble =
+                "package com.amazon;\n" +
+                "\n" +
+                "public class Double extends java.lang.Object {}";
+        repository.addSource(sourceForNumberProcessor);
+        repository.addSource(sourceForListOfDoubles);
+        repository.addSource(sourceForList);
+        repository.addSource(sourceForNumber);
+        repository.addSource(sourceForDouble);
+
+        final BeanDefinition bean = springBeanParser.parse(xml);
+        final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
+
+        final ResolvedTypes types = resolver.validateAndResolve(bean);
+        assertThat(types.isValid(), equalTo(false));
+    }
+
+    @Test
     public void passesValidationAndResolvesAmbiguityWithOneGenericTypeParameter() throws Exception {
         final String xml =
                 "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +

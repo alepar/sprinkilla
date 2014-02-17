@@ -54,7 +54,7 @@ public class JavaSourceRepositoryTest {
     }
 
     @Test
-    public void invariantTypesAreNotAssignable() throws Exception {
+    public void invariantWhenSourceTypeParameterDoesNotMeetDestinationExtendsBoundary() throws Exception {
         final String listClass = "public class List<T> {}";
         final String doubleClass = "public class String {}";
         final String numberClass = "public class Number {}";
@@ -64,7 +64,7 @@ public class JavaSourceRepositoryTest {
         repository.addSource(numberClass);
 
 
-        final TypeDefinition listOfDoublesType = new AntlrTypeDefinition(
+        final TypeDefinition listOfStringsType = new AntlrTypeDefinition(
                 "List",
                 Arrays.<TypeDefinition>asList(new AntlrTypeDefinition(
                         "String",
@@ -88,6 +88,40 @@ public class JavaSourceRepositoryTest {
                 null
         );
 
-        assertThat(repository.isAssignable(listOfDoublesType, listOfSomeNumbersType), equalTo(false));
+        assertThat(repository.isAssignable(listOfStringsType, listOfSomeNumbersType), equalTo(false));
+    }
+
+    @Test
+    public void invariantWhenSourceTypeParameterIsSubclassOfDestinationTypeParameter() throws Exception {
+        final String listClass = "public class List<T> {}";
+        final String doubleClass = "public class Double extends Number {}";
+        final String numberClass = "public class Number {}";
+
+        repository.addSource(listClass);
+        repository.addSource(doubleClass);
+        repository.addSource(numberClass);
+
+
+        final TypeDefinition listOfDoublesType = new AntlrTypeDefinition(
+                "List",
+                Arrays.<TypeDefinition>asList(new AntlrTypeDefinition(
+                        "Double",
+                        Collections.<TypeDefinition>emptyList(),
+                        null
+                )),
+                null
+        );
+
+        final TypeDefinition listOfNumbersType = new AntlrTypeDefinition(
+                "List",
+                Arrays.<TypeDefinition>asList(new AntlrTypeDefinition(
+                        "Number",
+                        Collections.<TypeDefinition>emptyList(),
+                        null
+                )),
+                null
+        );
+
+        assertThat(repository.isAssignable(listOfDoublesType, listOfNumbersType), equalTo(false));
     }
 }
