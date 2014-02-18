@@ -1,5 +1,9 @@
 package com.amazon.java;
 
 public interface TypeHierarchy {
-    boolean isAssignable(TypeDefinition src, TypeDefinition dest);
+    GuessedTypeParameters isAssignable(TypeDefinition src, TypeDefinition dest);
+
+    interface GuessedTypeParameters {
+        TypeDefinition typeFor(TypeParameter param);
+    }
 }

@@ -27,7 +27,7 @@ public class JavaSourceRepository implements TypeHierarchy, ClassDefinitionProvi
     }
 
     @Override
-    public boolean isAssignable(TypeDefinition src, TypeDefinition dest) {
+    public GuessedTypeParameters isAssignable(TypeDefinition src, TypeDefinition dest) {
         return typeHierarchy.isAssignable(src, dest);
     }
 

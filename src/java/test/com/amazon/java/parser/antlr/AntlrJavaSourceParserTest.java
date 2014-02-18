@@ -281,14 +281,15 @@ public class AntlrJavaSourceParserTest {
          * unfortunately this is a hack that relies on logback being our logging framework
          * fortunately omitting this is safe and will not break unit tests
          */
-        setParserLoggingLevelTo(Level.TRACE);
+//        setParserLoggingLevelTo(Level.TRACE);
     }
 
     @After
     public void tearDown() throws Exception {
-        setParserLoggingLevelTo(Level.DEBUG);
+//        setParserLoggingLevelTo(Level.DEBUG);
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     private static void setParserLoggingLevelTo(Level level) {
         ((Logger) LoggerFactory.getLogger("com.amazon.java.parser.antlr.StackTreeWalker")).setLevel(level);
     }

@@ -9,7 +9,8 @@ import com.amazon.java.parser.antlr.AntlrJavaSourceParser;
 import com.amazon.java.parser.antlr.AntlrTypeDefinition;
 import com.amazon.java.parser.antlr.AntlrTypeParameter;
 
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class JavaSourceRepositoryTest {
@@ -50,7 +51,7 @@ public class JavaSourceRepositoryTest {
                 null
         );
 
-        assertThat(repository.isAssignable(listOfDoublesType, listOfSomeNumbersType), equalTo(true));
+        assertThat(repository.isAssignable(listOfDoublesType, listOfSomeNumbersType), notNullValue());
     }
 
     @Test
@@ -88,7 +89,7 @@ public class JavaSourceRepositoryTest {
                 null
         );
 
-        assertThat(repository.isAssignable(listOfStringsType, listOfSomeNumbersType), equalTo(false));
+        assertThat(repository.isAssignable(listOfStringsType, listOfSomeNumbersType), nullValue());
     }
 
     @Test
@@ -122,6 +123,6 @@ public class JavaSourceRepositoryTest {
                 null
         );
 
-        assertThat(repository.isAssignable(listOfDoublesType, listOfNumbersType), equalTo(false));
+        assertThat(repository.isAssignable(listOfDoublesType, listOfNumbersType), nullValue());
     }
 }

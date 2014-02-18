@@ -3,8 +3,10 @@ package com.amazon.java;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.amazon.java.parser.antlr.AntlrTypeDefinition;
@@ -18,11 +20,16 @@ public class IndexedTypeHierarchy implements TypeHierarchy {
     }
 
     @Override
-    public boolean isAssignable(TypeDefinition src, TypeDefinition dest) {
-        return isAssignable(src, dest, true);
+    public GuessedTypeParameters isAssignable(TypeDefinition src, TypeDefinition dest) {
+        final GuessedTypeParameters guessedTypeParameters = new GuessedTypeParameters();
+        if (isAssignable(src, dest, guessedTypeParameters, true)) {
+            return guessedTypeParameters;
+        } else {
+            return null;
+        }
     }
 
-    private boolean isAssignable(TypeDefinition src, TypeDefinition dest, boolean allowSubclasses) {
+    private boolean isAssignable(TypeDefinition src, TypeDefinition dest, GuessedTypeParameters resolvedTypes, boolean allowSubclasses) {
         if (src.getFqcn() != null) {
 
             // src is not a captured type
@@ -37,7 +44,7 @@ public class IndexedTypeHierarchy implements TypeHierarchy {
                     }
 
                     for (int i=0; i< srcTypeParams.size(); i++) {
-                        if(!isAssignable(srcTypeParams.get(i), dstTypeParams.get(i), false)) {
+                        if(!isAssignable(srcTypeParams.get(i), dstTypeParams.get(i), resolvedTypes, false)) {
                             return false;
                         }
                     }
@@ -49,7 +56,7 @@ public class IndexedTypeHierarchy implements TypeHierarchy {
                     for (Deque<TypeDefinition> path : paths) {
                         for (TypeDefinition parent : path) {
                             if (dest.getFqcn().equals(parent.getFqcn())) { // if we found parent with needed type
-                                return isAssignable(parent, dest, false);         // just check for covariance
+                                return isAssignable(parent, dest, resolvedTypes, false);         // just check for covariance
                             }
                         }
                     }
@@ -59,19 +66,57 @@ public class IndexedTypeHierarchy implements TypeHierarchy {
                 }
             } else {
                 // dest is captured type, we're inside covariance check
+                //noinspection SimplifiableIfStatement
                 if (dest.getTypeParameter().getBoundaryModifier().equals(TypeParameter.BoundaryModifier.EXTENDS)) {
-                    return isAssignable(src, dest.getTypeParameter().getBoundaryType(), true);
+                    final boolean assignable = isAssignable(src, dest.getTypeParameter().getBoundaryType(), resolvedTypes, true);
+                    if (assignable) {
+                        resolvedTypes.addResolvedType(dest.getTypeParameter(), src);
+                        return true;
+                    } else {
+                        return false;
+                    }
                 } else {
-                    return false; // SUPER not supported
+                    // SUPER not supported
+                    return false;
                 }
 
             }
         } else {
-//            if () {
-//            }
+            //src is captured type
+            final TypeDefinition newSrc = src.getTypeParameter().getBoundaryType();
+            if (src.getTypeParameter().getBoundaryModifier() != TypeParameter.BoundaryModifier.EXTENDS) {
+                // SUPER not supported
+                return false;
+            }
+            TypeDefinition newDest;
+            if (dest.getFqcn() != null) {
+                newDest = dest;
+            } else if (dest.getTypeParameter().getBoundaryModifier() != TypeParameter.BoundaryModifier.EXTENDS) {
+                // SUPER not supported
+                return false;
+            } else {
+                newDest = dest.getTypeParameter().getBoundaryType();
+            }
 
-            //src is captured type, not supported yet
-            return false;
+            if (isAssignable(newSrc, newDest, resolvedTypes, true)) {
+                if (src.getTypeParameter() != null) {
+                    resolvedTypes.addResolvedType(src.getTypeParameter(), newSrc);
+                }
+                if (dest.getTypeParameter() != null) {
+                    resolvedTypes.addResolvedType(dest.getTypeParameter(), newSrc);
+                }
+                return true;
+            } else if(isAssignable(newDest, newSrc, resolvedTypes, true)) {
+                if (src.getTypeParameter() != null) {
+                    resolvedTypes.addResolvedType(src.getTypeParameter(), newDest);
+                }
+                if (dest.getTypeParameter() != null) {
+                    resolvedTypes.addResolvedType(dest.getTypeParameter(), newDest);
+                }
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 
@@ -134,4 +179,17 @@ public class IndexedTypeHierarchy implements TypeHierarchy {
         throw new RuntimeException("assert failed - could not find matching type param");
     }
 
+    private static class GuessedTypeParameters implements TypeHierarchy.GuessedTypeParameters {
+
+        private final Map<TypeParameter, TypeDefinition> resolved = new HashMap<>();
+
+        public void addResolvedType(TypeParameter typeParameter, TypeDefinition src) {
+            resolved.put(typeParameter, src);
+        }
+
+        @Override
+        public TypeDefinition typeFor(TypeParameter param) {
+            return resolved.get(param);
+        }
+    }
 }

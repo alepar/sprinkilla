@@ -7,7 +7,7 @@ import com.amazon.java.MapDefinitionProvider;
 import com.amazon.java.parser.antlr.AntlrJavaSourceParser;
 import com.amazon.spring.parser.SpringBeanParser;
 import com.amazon.spring.parser.XercesSpringBeanParser;
-import com.amazon.spring.resolver.ResolvedTypes;
+import com.amazon.spring.resolver.GuessedTypes;
 import com.amazon.spring.resolver.SpringBeanTypeValidator;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -44,7 +44,7 @@ public class SpringBeanTypeValidatorTest {
 
         final BeanDefinition bean = springBeanParser.parse(xml);
         final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
-        final ResolvedTypes types = resolver.validateAndResolve(bean);
+        final GuessedTypes types = resolver.validateAndResolve(bean);
 
         assertThat(types.isValid(), equalTo(true));
     }
@@ -79,7 +79,7 @@ public class SpringBeanTypeValidatorTest {
 
         final BeanDefinition bean = springBeanParser.parse(xml);
         final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
-        final ResolvedTypes types = resolver.validateAndResolve(bean);
+        final GuessedTypes types = resolver.validateAndResolve(bean);
 
         assertThat(types.isValid(), equalTo(false));
     }
@@ -116,7 +116,7 @@ public class SpringBeanTypeValidatorTest {
 
         final BeanDefinition bean = springBeanParser.parse(xml);
         final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
-        final ResolvedTypes types = resolver.validateAndResolve(bean);
+        final GuessedTypes types = resolver.validateAndResolve(bean);
 
         assertThat(types.isValid(), equalTo(true));
     }
@@ -149,7 +149,7 @@ public class SpringBeanTypeValidatorTest {
 
         final BeanDefinition bean = springBeanParser.parse(xml);
         final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
-        final ResolvedTypes types = resolver.validateAndResolve(bean);
+        final GuessedTypes types = resolver.validateAndResolve(bean);
 
         assertThat(types.isValid(), equalTo(true));
     }
@@ -182,7 +182,7 @@ public class SpringBeanTypeValidatorTest {
 
         final BeanDefinition bean = springBeanParser.parse(xml);
         final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
-        final ResolvedTypes types = resolver.validateAndResolve(bean);
+        final GuessedTypes types = resolver.validateAndResolve(bean);
 
         assertThat(types.isValid(), equalTo(false));
     }
@@ -230,7 +230,7 @@ public class SpringBeanTypeValidatorTest {
         final BeanDefinition bean = springBeanParser.parse(xml);
         final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
 
-        final ResolvedTypes types = resolver.validateAndResolve(bean);
+        final GuessedTypes types = resolver.validateAndResolve(bean);
         assertThat(types.isValid(), equalTo(true));
     }
 
@@ -277,7 +277,7 @@ public class SpringBeanTypeValidatorTest {
         final BeanDefinition bean = springBeanParser.parse(xml);
         final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
 
-        final ResolvedTypes types = resolver.validateAndResolve(bean);
+        final GuessedTypes types = resolver.validateAndResolve(bean);
         assertThat(types.isValid(), equalTo(false));
     }
 
@@ -286,12 +286,11 @@ public class SpringBeanTypeValidatorTest {
         final String xml =
                 "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
                 "    <constructor-arg name=\"one\">\n" +
-                "        <bean id=\"oneArg\" class=\"com.amazon.ListOfDoubles\" />\n" +
+                "        <bean class=\"com.amazon.ListOfDoubles\" />\n" +
                 "    </constructor-arg>\n" +
                 "</bean>\n";
         final String sourceForNumberProcessor =
                 "package com.amazon;\n" +
-                "\n" +
                 "import java.util.List;\n" +
                 "\n" +
                 "public class NumberProcessor<T extends com.amazon.Number> {\n" +
@@ -299,22 +298,12 @@ public class SpringBeanTypeValidatorTest {
                 "}";
         final String sourceForListOfDoubles =
                 "package com.amazon;\n" +
-                "\n" +
                 "import java.util.List;\n" +
                 "\n" +
                 "public class ListOfDoubles<T extends com.amazon.Double> implements List<T> { }";
-        final String sourceForList =
-                "package java.util;\n" +
-                "\n" +
-                "public class List<T> {}";
-        final String sourceForNumber =
-                "package com.amazon;\n" +
-                "\n" +
-                "public class Number {}";
-        final String sourceForDouble =
-                "package com.amazon;\n" +
-                "\n" +
-                "public class Double extends com.amazon.Number {}";
+        final String sourceForList = "package java.util; public class List<T> {}";
+        final String sourceForNumber = "package com.amazon; public class Number {}";
+        final String sourceForDouble = "package com.amazon; public class Double extends com.amazon.Number {}";
         repository.addSource(sourceForNumberProcessor);
         repository.addSource(sourceForListOfDoubles);
         repository.addSource(sourceForList);
@@ -324,11 +313,11 @@ public class SpringBeanTypeValidatorTest {
         final BeanDefinition bean = springBeanParser.parse(xml);
         final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
 
-        final ResolvedTypes types = resolver.validateAndResolve(bean);
+        final GuessedTypes types = resolver.validateAndResolve(bean);
         assertThat(types.isValid(), equalTo(true));
 
-        final ResolvedArguments arg = types.getTypesFor(bean);
-        assertThat(arg.getTypeFor("T"), equalTo("Double"));
+        final GuessedTypeParameters arg = types.getTypesFor(bean);
+        assertThat(arg.getFqcnFor("T"), equalTo("com.amazon.Double"));
     }
 
 }
