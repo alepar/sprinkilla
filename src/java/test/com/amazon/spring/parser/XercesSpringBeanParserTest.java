@@ -1,14 +1,29 @@
 package com.amazon.spring.parser;
 
+import org.junit.Test;
+
 import com.amazon.spring.BeanDefinition;
 import com.amazon.spring.ConstructorArgument;
-import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
 public class XercesSpringBeanParserTest {
+
+    <bean id="someId" class="com.amazon.Component">
+        <constructor-arg name="name" value="nameValue"/>
+        <constructor-arg name="component">
+            <bean class="com.amazon.AnotherComponent">
+                <constructor-arg name="contents">
+                    <util:list>
+                        <ref bean="content1"/>
+                        <ref bean="content2"/>
+                    </util:list>
+                </constructor-arg>
+            </bean>
+        </constructor-arg>
+    </bean>
 
     private static final String SIMPLE_BEAN =
             "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
