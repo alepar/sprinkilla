@@ -1,15 +1,15 @@
 package com.amazon.spring;
 
-import org.junit.Test;
-
 import com.amazon.java.JavaSourceRepository;
 import com.amazon.java.MapDefinitionProvider;
 import com.amazon.java.parser.antlr.AntlrJavaSourceParser;
+import com.amazon.spring.parser.FrameworkSpringBeanParser;
 import com.amazon.spring.parser.SpringBeanParser;
-import com.amazon.spring.parser.XercesSpringBeanParser;
 import com.amazon.spring.resolver.GuessedTypes;
 import com.amazon.spring.resolver.SpringBeanTypeValidator;
+import org.junit.Test;
 
+import static com.amazon.spring.parser.FrameworkSpringBeanParserTest.wrapBeanDef;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 
@@ -17,16 +17,16 @@ public class SpringBeanTypeValidatorTest {
 
     private final JavaSourceRepository repository = new JavaSourceRepository(new MapDefinitionProvider(), new AntlrJavaSourceParser());
 
-    private final SpringBeanParser springBeanParser = new XercesSpringBeanParser();
+    private final SpringBeanParser springBeanParser = new FrameworkSpringBeanParser();
 
     @Test
     public void passesValidationWhenExpectedClassAndPassedInAreTheSame() throws Exception {
-        final String xml =
+        final String xml = wrapBeanDef(
                 "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
                 "    <constructor-arg name=\"one\">\n" +
                 "        <bean id=\"oneArg\" class=\"com.amazon.SomeType\" />\n" +
                 "    </constructor-arg>\n" +
-                "</bean>\n";
+                "</bean>\n");
         final String sourceForNumberProcessor =
                 "package com.amazon;\n" +
                 "\n" +
@@ -51,12 +51,12 @@ public class SpringBeanTypeValidatorTest {
 
     @Test
     public void failsValidationWhenExpectedClassAndPassedInAreDifferent() throws Exception {
-        final String xml =
+        final String xml = wrapBeanDef(
                 "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
                 "    <constructor-arg name=\"one\">\n" +
                 "        <bean class=\"com.amazon.SomeType\" />\n" +
                 "    </constructor-arg>\n" +
-                "</bean>\n";
+                "</bean>\n");
         final String sourceForNumberProcessor =
                 "package com.amazon;\n" +
                 "\n" +
@@ -86,12 +86,12 @@ public class SpringBeanTypeValidatorTest {
 
     @Test
     public void passingSubclassAsAnArgumentPassesValidation() throws Exception {
-        final String xml =
+        final String xml = wrapBeanDef(
                 "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
                 "    <constructor-arg name=\"one\">\n" +
                 "        <bean class=\"com.amazon.SomeType\" />\n" +
                 "    </constructor-arg>\n" +
-                "</bean>\n";
+                "</bean>\n");
         final String sourceForBeanClass =
                 "package com.amazon;\n" +
                 "\n" +
@@ -123,12 +123,12 @@ public class SpringBeanTypeValidatorTest {
 
     @Test
     public void passesValidationWhenExpectedClassAndPassedInHaveEqualTypeVariable() throws Exception {
-        final String xml =
+        final String xml = wrapBeanDef(
                 "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
                 "    <constructor-arg name=\"one\">\n" +
                 "        <bean id=\"oneArg\" class=\"com.amazon.SomeType\" />\n" +
                 "    </constructor-arg>\n" +
-                "</bean>\n";
+                "</bean>\n");
         final String sourceForNumberProcessor =
                 "package com.amazon;\n" +
                 "\n" +
@@ -156,12 +156,12 @@ public class SpringBeanTypeValidatorTest {
 
     @Test
     public void failsValidationWhenExpectedClassAndPassedInHaveContravariantTypes() throws Exception {
-        final String xml =
+        final String xml = wrapBeanDef(
                 "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
                 "    <constructor-arg name=\"one\">\n" +
                 "        <bean id=\"oneArg\" class=\"com.amazon.SomeType\" />\n" +
                 "    </constructor-arg>\n" +
-                "</bean>\n";
+                "</bean>\n");
         final String sourceForNumberProcessor =
                 "package com.amazon;\n" +
                 "\n" +
@@ -189,12 +189,12 @@ public class SpringBeanTypeValidatorTest {
 
     @Test
     public void passesValidationForCovariantTypes() throws Exception {
-        final String xml =
+        final String xml = wrapBeanDef(
                 "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
                 "    <constructor-arg name=\"one\">\n" +
                 "        <bean id=\"oneArg\" class=\"com.amazon.ListOfDoubles\" />\n" +
                 "    </constructor-arg>\n" +
-                "</bean>\n";
+                "</bean>\n");
         final String sourceForNumberProcessor =
                 "package com.amazon;\n" +
                 "\n" +
@@ -236,12 +236,12 @@ public class SpringBeanTypeValidatorTest {
 
     @Test
     public void passesValidationForInvariantTypes() throws Exception {
-        final String xml =
+        final String xml = wrapBeanDef(
                 "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
                 "    <constructor-arg name=\"one\">\n" +
                 "        <bean id=\"oneArg\" class=\"com.amazon.ListOfDoubles\" />\n" +
                 "    </constructor-arg>\n" +
-                "</bean>\n";
+                "</bean>\n");
         final String sourceForNumberProcessor =
                 "package com.amazon;\n" +
                 "\n" +
@@ -283,12 +283,12 @@ public class SpringBeanTypeValidatorTest {
 
     @Test
     public void passesValidationAndResolvesAmbiguityWithOneGenericTypeParameter() throws Exception {
-        final String xml =
+        final String xml = wrapBeanDef(
                 "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
                 "    <constructor-arg name=\"one\">\n" +
                 "        <bean class=\"com.amazon.ListOfDoubles\" />\n" +
                 "    </constructor-arg>\n" +
-                "</bean>\n";
+                "</bean>\n");
         final String sourceForNumberProcessor =
                 "package com.amazon;\n" +
                 "import java.util.List;\n" +

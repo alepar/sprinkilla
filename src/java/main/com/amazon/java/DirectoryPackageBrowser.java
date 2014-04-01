@@ -1,11 +1,11 @@
 package com.amazon.java;
 
+import com.amazon.FileUtil;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
-import com.amazon.FileUtil;
 
 public class DirectoryPackageBrowser implements PackageBrowser {
 
@@ -22,8 +22,12 @@ public class DirectoryPackageBrowser implements PackageBrowser {
     @Override
     public String find(String fqcn) {
         try {
-            final String relativePath = fqcn.replaceAll("\\.", "" + File.separatorChar + ".java");
-            try (InputStream is = new FileInputStream(new File(dir, relativePath))) {
+            final String relativePath = fqcn.replaceAll("\\.", "" + File.separatorChar) + ".java";
+            final File file = new File(dir, relativePath);
+            if (!file.exists()) {
+                return null;
+            }
+            try (InputStream is = new FileInputStream(file)) {
                 return FileUtil.readToString(is);
             }
         } catch (IOException e) {

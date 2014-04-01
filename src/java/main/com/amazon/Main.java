@@ -1,5 +1,15 @@
 package com.amazon;
 
+import com.amazon.java.CompositePackageBrowser;
+import com.amazon.java.DirectoryPackageBrowser;
+import com.amazon.java.PackageBrowser;
+import com.amazon.java.ZipFilePackageBrowser;
+import com.amazon.spring.BeanDefinition;
+import com.amazon.spring.parser.FrameworkSpringBeanParser;
+import com.amazon.spring.parser.SpringBeanParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
@@ -8,17 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.amazon.java.CompositePackageBrowser;
-import com.amazon.java.DirectoryPackageBrowser;
-import com.amazon.java.PackageBrowser;
-import com.amazon.java.ZipFilePackageBrowser;
-import com.amazon.spring.BeanDefinition;
-import com.amazon.spring.parser.SpringBeanParser;
-import com.amazon.spring.parser.XercesSpringBeanParser;
 
 public class Main {
 
@@ -47,7 +46,7 @@ public class Main {
         final Map<String, String> springFiles = readSpringFiles(xmlFolder);
 
         final Map<String, BeanDefinition> springBeans = new HashMap<>();
-        final SpringBeanParser springParser = new XercesSpringBeanParser();
+        final SpringBeanParser springParser = new FrameworkSpringBeanParser();
         BeanDefinition parse;
         for (Map.Entry<String, String> entry : springFiles.entrySet()) {
             try {
