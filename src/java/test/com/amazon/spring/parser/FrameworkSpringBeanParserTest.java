@@ -10,20 +10,6 @@ import static org.junit.Assert.assertThat;
 
 public class FrameworkSpringBeanParserTest {
 
-//    <bean id="someId" class="com.amazon.Component">
-//        <constructor-arg name="name" value="nameValue"/>
-//        <constructor-arg name="component">
-//            <bean class="com.amazon.AnotherComponent">
-//                <constructor-arg name="contents">
-//                    <util:list>
-//                        <ref bean="content1"/>
-//                        <ref bean="content2"/>
-//                    </util:list>
-//                </constructor-arg>
-//            </bean>
-//        </constructor-arg>
-//    </bean>
-
     private static final String SIMPLE_BEAN = wrapBeanDef(
             "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
             "    <constructor-arg name=\"one\">\n" +
@@ -44,6 +30,16 @@ public class FrameworkSpringBeanParserTest {
             "    </constructor-arg>\n" +
             "</bean>");
 
+    public static final String SOME_LISTS = wrapBeanDef(
+            "<bean id=\"someId\" class=\"com.amazon.Component\">\n" +
+            "    <constructor-arg name=\"arg\">\n" +
+            "        <util:list>\n" +
+            "            <ref bean=\"content1\"/>\n" +
+            "            <ref bean=\"content2\"/>\n" +
+            "        </util:list>\n" +
+            "    </constructor-arg>\n" +
+            "</bean>\n"
+    );
 
     private final SpringBeanParser parser = new FrameworkSpringBeanParser();
 
@@ -85,13 +81,26 @@ public class FrameworkSpringBeanParserTest {
         assertThat(argBean.getBeanDefinition().getFqcn(), equalTo("com.amazon.Third"));
     }
 
+    @Test
+    public void extractsBeanWithUtilListArgument() throws Exception {
+        final BeanDefinition bean = parser.parse(SOME_LISTS);
+
+        assertThat(bean.getConstructorArgs(), hasSize(1));
+
+        final ConstructorArgument argBean = bean.getConstructorArgs().get(0);
+        assertThat(argBean.getName(), equalTo("arg"));
+        assertThat(argBean.getBeanDefinition().getFqcn(), equalTo("java.utill.List"));
+    }
+
     public static String wrapBeanDef(String beanDefXml) {
         return
                 "<?xml version=\"1.0\" ?>\n" +
                 "<beans\n" +
                 "        xmlns=\"http://www.springframework.org/schema/beans\"\n" +
                 "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                "        xsi:schemaLocation=\"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd\">"
+                "        xmlns:util=\"http://www.springframework.org/schema/util\"\n" +
+                "        xsi:schemaLocation=\"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd\n" +
+                        "                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd\">"
                 + beanDefXml
                 + "</beans>";
     }

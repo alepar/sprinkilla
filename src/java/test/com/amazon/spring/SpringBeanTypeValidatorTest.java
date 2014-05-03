@@ -235,7 +235,7 @@ public class SpringBeanTypeValidatorTest {
     }
 
     @Test
-    public void passesValidationForInvariantTypes() throws Exception {
+    public void failsValidationForInvariantTypes() throws Exception {
         final String xml = wrapBeanDef(
                 "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
                 "    <constructor-arg name=\"one\">\n" +
@@ -285,22 +285,22 @@ public class SpringBeanTypeValidatorTest {
     public void passesValidationAndResolvesAmbiguityWithOneGenericTypeParameter() throws Exception {
         final String xml = wrapBeanDef(
                 "<bean id=\"oneArg\" class=\"com.amazon.NumberProcessor\">\n" +
-                "    <constructor-arg name=\"one\">\n" +
-                "        <bean class=\"com.amazon.ListOfDoubles\" />\n" +
-                "    </constructor-arg>\n" +
-                "</bean>\n");
+                        "    <constructor-arg name=\"one\">\n" +
+                        "        <bean class=\"com.amazon.ListOfDoubles\" />\n" +
+                        "    </constructor-arg>\n" +
+                        "</bean>\n");
         final String sourceForNumberProcessor =
                 "package com.amazon;\n" +
-                "import java.util.List;\n" +
-                "\n" +
-                "public class NumberProcessor<T extends com.amazon.Number> {\n" +
-                "    public NumberProcessor(List<T> numbers) {}\n" +
-                "}";
+                        "import java.util.List;\n" +
+                        "\n" +
+                        "public class NumberProcessor<T extends com.amazon.Number> {\n" +
+                        "    public NumberProcessor(List<T> numbers) {}\n" +
+                        "}";
         final String sourceForListOfDoubles =
                 "package com.amazon;\n" +
-                "import java.util.List;\n" +
-                "\n" +
-                "public class ListOfDoubles<T extends com.amazon.Double> implements List<T> { }";
+                        "import java.util.List;\n" +
+                        "\n" +
+                        "public class ListOfDoubles<T extends com.amazon.Double> implements List<T> { }";
         final String sourceForList = "package java.util; public class List<T> {}";
         final String sourceForNumber = "package com.amazon; public class Number {}";
         final String sourceForDouble = "package com.amazon; public class Double extends com.amazon.Number {}";
@@ -318,6 +318,52 @@ public class SpringBeanTypeValidatorTest {
 
         final GuessedTypeParameters arg = types.getTypesFor(bean);
         assertThat(arg.getFqcnFor("T"), equalTo("com.amazon.Double"));
+    }
+
+    @Test
+    public void resolvesTypeParameterForBuiltinSpringsUtilList() throws Exception {
+        final String xml = wrapBeanDef(
+                "<bean id=\"someId\" class=\"com.amazon.Component\">\n" +
+                        "    <constructor-arg name=\"arg\">\n" +
+                        "        <util:list>\n" +
+                        "            <bean class=\"com.amazon.Orange\"/>\n" +
+                        "            <bean class=\"com.amazon.Apple\"/>\n" +
+                        "        </util:list>\n" +
+                        "    </constructor-arg>\n" +
+                        "</bean>");
+        final String sourceForComponent =
+                "package com.amazon;\n" +
+                "import java.util.List;\n" +
+                "public class Component<T> {\n" +
+                "    public Component(List<T> items) {}\n" +
+                "}";
+        final String sourceForFruit = "package com.amazon; public class Fruit { }";
+        final String sourceForApple = "package com.amazon; public class Apple extends com.amazon.Fruit {}";
+        final String sourceForOrange = "package com.amazon; public class Orange extends com.amazon.Fruit {}";
+        repository.addSource(sourceForComponent);
+        repository.addSource(sourceForFruit);
+        repository.addSource(sourceForApple);
+        repository.addSource(sourceForOrange);
+
+        repository.addSource(
+                "package org.springframework.beans.factory.config;\n" +
+                "import java.util.List; \n" +
+                "public class ListFactoryBean<T> implements List<T> {\n" +
+                "    public ListFactoryBean(T one, T two) {}" +
+                "}"
+        );
+        repository.addSource(
+                "package java.util; public class List<T> {}"
+        );
+
+        final BeanDefinition bean = springBeanParser.parse(xml);
+        final SpringBeanTypeValidator resolver = new SpringBeanTypeValidator(repository, repository);
+
+        final GuessedTypes types = resolver.validateAndResolve(bean);
+        assertThat(types.isValid(), equalTo(true));
+
+        final GuessedTypeParameters arg = types.getTypesFor(bean);
+        assertThat(arg.getFqcnFor("T"), equalTo("com.amazon.Fruit"));
     }
 
 }
